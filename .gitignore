@@ -4,7 +4,9 @@
 
 ## Build generated
 build/
+Build/
 DerivedData/
+Index/
 
 ## Various settings
 *.pbxuser
