@@ -7,10 +7,23 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <MetalKit/MetalKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface Scene : NSObject
+{
+@public
+    simd_float3 playerPosition;
+}
+@end
+
 @interface Renderer : NSObject
+
+-(nonnull instancetype)initWithView:(MTKView*)view;
+-(void)drawInView:(MTKView*)view;
+-(void)enqeueScene:(Scene*)scn;
+-(void)handleSizeChange:(CGSize)size;
 
 @end
 

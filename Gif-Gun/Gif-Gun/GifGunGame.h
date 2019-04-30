@@ -10,7 +10,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class Renderer;
+
 @interface GifGunGame : NSObject
+
+-(nonnull instancetype)initWithRenderer:(Renderer*)renderer;
+-(void)tick:(double_t)deltaTime;
 
 @end
 

@@ -11,6 +11,14 @@
 		07FDC9442278826700E620ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9432278826700E620ED /* Assets.xcassets */; };
 		07FDC9472278826800E620ED /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9452278826800E620ED /* MainMenu.xib */; };
 		07FDC94A2278826800E620ED /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9492278826800E620ED /* main.m */; };
+		07FDC954227882C200E620ED /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 07FDC952227882C200E620ED /* MetalKit.framework */; };
+		07FDC955227882C200E620ED /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 07FDC953227882C200E620ED /* Metal.framework */; };
+		07FDC957227882C600E620ED /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 07FDC956227882C600E620ED /* CoreFoundation.framework */; };
+		07FDC95C2278841500E620ED /* MetalView.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC95B2278841500E620ED /* MetalView.m */; };
+		07FDC95F2278868A00E620ED /* gif_read.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC95D2278868A00E620ED /* gif_read.cpp */; };
+		07FDC9622278873200E620ED /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9612278873200E620ED /* ViewController.m */; };
+		07FDC965227887D800E620ED /* Renderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC964227887D800E620ED /* Renderer.m */; };
+		07FDC96B227889A100E620ED /* GifGunGame.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC96A227889A100E620ED /* GifGunGame.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +30,19 @@
 		07FDC9482278826800E620ED /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		07FDC9492278826800E620ED /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		07FDC94B2278826800E620ED /* Gif_Gun.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Gif_Gun.entitlements; sourceTree = "<group>"; };
+		07FDC952227882C200E620ED /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		07FDC953227882C200E620ED /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		07FDC956227882C600E620ED /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		07FDC95A2278841500E620ED /* MetalView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalView.h; sourceTree = "<group>"; };
+		07FDC95B2278841500E620ED /* MetalView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MetalView.m; sourceTree = "<group>"; };
+		07FDC95D2278868A00E620ED /* gif_read.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gif_read.cpp; sourceTree = "<group>"; };
+		07FDC95E2278868A00E620ED /* gif_read.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gif_read.h; sourceTree = "<group>"; };
+		07FDC9602278873200E620ED /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		07FDC9612278873200E620ED /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		07FDC963227887D800E620ED /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
+		07FDC964227887D800E620ED /* Renderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Renderer.m; sourceTree = "<group>"; };
+		07FDC969227889A100E620ED /* GifGunGame.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GifGunGame.h; sourceTree = "<group>"; };
+		07FDC96A227889A100E620ED /* GifGunGame.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GifGunGame.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -29,6 +50,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				07FDC957227882C600E620ED /* CoreFoundation.framework in Frameworks */,
+				07FDC954227882C200E620ED /* MetalKit.framework in Frameworks */,
+				07FDC955227882C200E620ED /* Metal.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -40,6 +64,7 @@
 			children = (
 				07FDC93F2278826500E620ED /* Gif-Gun */,
 				07FDC93E2278826500E620ED /* Products */,
+				07FDC951227882C200E620ED /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -54,6 +79,8 @@
 		07FDC93F2278826500E620ED /* Gif-Gun */ = {
 			isa = PBXGroup;
 			children = (
+				07FDC95D2278868A00E620ED /* gif_read.cpp */,
+				07FDC95E2278868A00E620ED /* gif_read.h */,
 				07FDC9402278826500E620ED /* AppDelegate.h */,
 				07FDC9412278826500E620ED /* AppDelegate.m */,
 				07FDC9432278826700E620ED /* Assets.xcassets */,
@@ -61,8 +88,26 @@
 				07FDC9482278826800E620ED /* Info.plist */,
 				07FDC9492278826800E620ED /* main.m */,
 				07FDC94B2278826800E620ED /* Gif_Gun.entitlements */,
+				07FDC95A2278841500E620ED /* MetalView.h */,
+				07FDC95B2278841500E620ED /* MetalView.m */,
+				07FDC9602278873200E620ED /* ViewController.h */,
+				07FDC9612278873200E620ED /* ViewController.m */,
+				07FDC963227887D800E620ED /* Renderer.h */,
+				07FDC964227887D800E620ED /* Renderer.m */,
+				07FDC969227889A100E620ED /* GifGunGame.h */,
+				07FDC96A227889A100E620ED /* GifGunGame.m */,
 			);
 			path = "Gif-Gun";
+			sourceTree = "<group>";
+		};
+		07FDC951227882C200E620ED /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				07FDC956227882C600E620ED /* CoreFoundation.framework */,
+				07FDC953227882C200E620ED /* Metal.framework */,
+				07FDC952227882C200E620ED /* MetalKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -135,7 +180,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				07FDC94A2278826800E620ED /* main.m in Sources */,
+				07FDC96B227889A100E620ED /* GifGunGame.m in Sources */,
+				07FDC95C2278841500E620ED /* MetalView.m in Sources */,
+				07FDC965227887D800E620ED /* Renderer.m in Sources */,
+				07FDC95F2278868A00E620ED /* gif_read.cpp in Sources */,
 				07FDC9422278826500E620ED /* AppDelegate.m in Sources */,
+				07FDC9622278873200E620ED /* ViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
