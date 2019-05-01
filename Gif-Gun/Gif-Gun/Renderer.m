@@ -12,6 +12,9 @@
 
 const int IN_FLIGHT_FRAMES = 3;
 
+const int MeshTypeCube = 1;
+const int MeshTypeDragon = 2;
+
 @interface Renderer()
 {
     id<MTLDevice> _device;
@@ -20,9 +23,11 @@ const int IN_FLIGHT_FRAMES = 3;
     NSLock* _sceneLock;
     
     id<MTLRenderPipelineState> _staticGeoPipeline;
+    id<MTLRenderPipelineState> _staticWireframePipeline;
+
     id<MTLRenderPipelineState> _decalPipeline;
     id<MTLDepthStencilState> _depthState;
-    
+    id<MTLDepthStencilState> _wireframeDepthState;
     MTKView* _view;
     MTKMesh* _cubeMesh;
     
@@ -38,11 +43,13 @@ const int IN_FLIGHT_FRAMES = 3;
     LoadingThread* _loadingThread;
     MTKMeshBufferAllocator* bufferAlloc;
 
+    int _loadedMeshes;
+    
 }
 
 -(void)loadMeshes;
 -(void)buildPipelines;
-
+-(Scene*)nextQueuedScene;
 @end
 
 @implementation Renderer
@@ -59,6 +66,7 @@ const int IN_FLIGHT_FRAMES = 3;
         _queuedScenes = [NSMutableArray new];
         _sceneLock = [NSLock new];
         _nextFrameIdx = 0;
+        _loadedMeshes = 0;
         
         [self loadMeshes];
         [self buildPipelines];
@@ -89,6 +97,14 @@ const int IN_FLIGHT_FRAMES = 3;
         {
             NSLog(@"Failed to created pipeline state, error %@", error);
         }
+        
+        pipelineDesc.fragmentFunction = [defaultLibrary newFunctionWithName:@"FSMainWire"];
+        _staticWireframePipeline = [_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
+        if (!_staticWireframePipeline)
+        {
+            NSLog(@"Failed to created pipeline state, error %@", error);
+        }
+
     }
     
     MTLDepthStencilDescriptor *depthStateDesc = [[MTLDepthStencilDescriptor alloc] init];
@@ -96,6 +112,8 @@ const int IN_FLIGHT_FRAMES = 3;
     depthStateDesc.depthWriteEnabled = YES;
     _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
 
+    depthStateDesc.depthWriteEnabled = NO;
+    _wireframeDepthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
 
 }
 
@@ -118,11 +136,18 @@ const int IN_FLIGHT_FRAMES = 3;
     _loadingThread = [[LoadingThread alloc] initWithBufferAllocator:bufferAlloc andVertexDesc:_mdlVertexDescriptor];
     _loadingThread.delegate = self;
 
+    [_loadingThread enqueueMeshRequest:meshes[0]];
+    [_loadingThread enqueueMeshRequest:meshes[1]];
 }
 
 -(void)enqeueScene:(Scene *)scn
 {
+    NSAssert(scn, @"attempting to enqueue null scene");
     
+    [_sceneLock lock];
+    [_queuedScenes addObject:scn];
+    [_sceneLock unlock];
+
 }
 
 -(void)handleSizeChange:(CGSize)size
@@ -140,18 +165,26 @@ const int IN_FLIGHT_FRAMES = 3;
         { 0, ys, 0, 0 },
         { 0, 0, zs, 1 },
         { 0, 0, -nearZ * zs, 0 } } };
-    
-    _viewMatrix = (matrix_float4x4){ {
-        { 1, 0, 0, 0 },
-        { 0, 1, 0, 0 },
-        { 0, 0, 1, 0 },
-        { 0, 0, 5, 1 } } };
+}
+
+-(Scene*)nextQueuedScene
+{
+    [_sceneLock lock];
+    Scene* s = [_queuedScenes firstObject];
+    if (s)
+    {
+        [_queuedScenes removeObjectAtIndex:0];
+    }
+    [_sceneLock unlock];
+    return s;
 }
 
 -(void)drawInView:(MTKView *)view
 {
     dispatch_semaphore_wait(_inFlightSemaphore, DISPATCH_TIME_FOREVER);
-    
+    if ([_queuedScenes count] < 1) return;
+    Scene* scn = [self nextQueuedScene];
+
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"Frame";
     
@@ -160,14 +193,63 @@ const int IN_FLIGHT_FRAMES = 3;
     
     if (renderPassDesc != nil)
     {
+        matrix_float4x4 vertexUniforms[2];
+        vertexUniforms[0] = _projectionMatrix;
+
+        matrix_float4x4 viewMatrix = (matrix_float4x4){ {
+            { 1, 0, 0, 0 },
+            { 0, 1, 0, 0 },
+            { 0, 0, 1, 1 },
+            { scn->playerPosition.x, scn->playerPosition.y, scn->playerPosition.z, 0 } } };
+
+        
         id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
         commandEncoder.label = @"RenderEncoder";
-        [commandEncoder setRenderPipelineState:_staticGeoPipeline];
-        [commandEncoder setDepthStencilState:_depthState];
-        
         [commandEncoder pushDebugGroup:@"DrawStaticGeo"];
-        [commandEncoder popDebugGroup];
+
+        if (_loadedMeshes >= MeshTypeCube)
+        {
+            [commandEncoder pushDebugGroup:@"Cubes"];
+            [commandEncoder setRenderPipelineState:_staticGeoPipeline];
+            [commandEncoder setDepthStencilState:_depthState];
+
+            //fill first
+            [commandEncoder setTriangleFillMode:MTLTriangleFillModeFill];
+            [commandEncoder setRenderPipelineState:_staticGeoPipeline];
+            [commandEncoder setDepthStencilState:_depthState];
+
+            for (int i = 0; i < 6; ++i)
+            {
+                
+                
+                for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
+                {
+                    [commandEncoder drawIndexedPrimitives:submesh.primitiveType indexCount:submesh.indexCount indexType:submesh.indexType indexBuffer:submesh.indexBuffer.buffer indexBufferOffset:submesh.indexBuffer.offset];
+                }
+
+            }
+            
+            //then wireframe
+            [commandEncoder setTriangleFillMode:MTLTriangleFillModeLines];
+            [commandEncoder setRenderPipelineState:_staticWireframePipeline];
+            [commandEncoder setDepthStencilState:_wireframeDepthState];
+
+            for (int i = 0; i < 6; ++i)
+            {
+                for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
+                {
+                    [commandEncoder drawIndexedPrimitives:submesh.primitiveType indexCount:submesh.indexCount indexType:submesh.indexType indexBuffer:submesh.indexBuffer.buffer indexBufferOffset:submesh.indexBuffer.offset];
+                }
+            }
+
+            //then fill
+            [commandEncoder setTriangleFillMode:MTLTriangleFillModeFill];
+            [commandEncoder popDebugGroup];
+
+        }
         
+        [commandEncoder popDebugGroup];
+
         [commandEncoder endEncoding];
         [commandBuffer presentDrawable:_view.currentDrawable];
         
@@ -188,7 +270,10 @@ const int IN_FLIGHT_FRAMES = 3;
 
 - (void)onMeshLoaded:(nonnull MDLAsset *)asset
 {
-   
+    _loadedMeshes++;
 }
 
+@end
+
+@implementation Scene
 @end

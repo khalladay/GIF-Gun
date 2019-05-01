@@ -15,6 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 {
 @public
     simd_float3 playerPosition;
+    simd_float3 cubePositions[6]; //room is built by Axis aligned cubes
+    simd_float3 cubeScales[6];
+    simd_float3 dragonPosition;
 }
 @end
 

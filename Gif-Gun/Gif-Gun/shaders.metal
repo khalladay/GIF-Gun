@@ -39,11 +39,15 @@ vertex VertexOUT VSMain(VertexIN vIN [[stage_in]],
     return vOUT;
 }
 
-fragment float4 FSMain(VertexOUT fIN [[stage_in]],
-                            constant float4& _color [[buffer(1)]])
+fragment float4 FSMain(VertexOUT fIN [[stage_in]])
 {
     float3 lightDir = normalize(float3(1,1,-1));
     float d = max(0.0,dot(normalize(fIN.normal), lightDir));
-    float4 color = float4(d*_color);
+    float4 color = float4(d);
     return color;
+}
+
+fragment float4 FSMainWire(VertexOUT fIN [[stage_in]])
+{
+    return float4(0,0,0,1);
 }

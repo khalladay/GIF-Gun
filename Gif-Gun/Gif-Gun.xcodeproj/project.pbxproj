@@ -21,6 +21,8 @@
 		07FDC96B227889A100E620ED /* GifGunGame.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC96A227889A100E620ED /* GifGunGame.m */; };
 		07FDC97122792FAB00E620ED /* LoadingThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC97022792FAB00E620ED /* LoadingThread.m */; };
 		07FDC9732279331B00E620ED /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9722279331B00E620ED /* shaders.metal */; };
+		07FDC9762279D90E00E620ED /* cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9742279D90E00E620ED /* cube.obj */; };
+		07FDC9772279D90E00E620ED /* dragon.obj in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9752279D90E00E620ED /* dragon.obj */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,6 +50,8 @@
 		07FDC96F22792FAB00E620ED /* LoadingThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoadingThread.h; sourceTree = "<group>"; };
 		07FDC97022792FAB00E620ED /* LoadingThread.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoadingThread.m; sourceTree = "<group>"; };
 		07FDC9722279331B00E620ED /* shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = shaders.metal; sourceTree = "<group>"; };
+		07FDC9742279D90E00E620ED /* cube.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = cube.obj; path = "Gif-Gun/cube.obj"; sourceTree = "<group>"; };
+		07FDC9752279D90E00E620ED /* dragon.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = dragon.obj; path = "Gif-Gun/dragon.obj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +71,8 @@
 		07FDC9342278826500E620ED = {
 			isa = PBXGroup;
 			children = (
+				07FDC9742279D90E00E620ED /* cube.obj */,
+				07FDC9752279D90E00E620ED /* dragon.obj */,
 				07FDC93F2278826500E620ED /* Gif-Gun */,
 				07FDC93E2278826500E620ED /* Products */,
 				07FDC951227882C200E620ED /* Frameworks */,
@@ -175,6 +181,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				07FDC9762279D90E00E620ED /* cube.obj in Resources */,
+				07FDC9772279D90E00E620ED /* dragon.obj in Resources */,
 				07FDC9442278826700E620ED /* Assets.xcassets in Resources */,
 				07FDC9472278826800E620ED /* MainMenu.xib in Resources */,
 			);
