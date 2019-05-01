@@ -19,6 +19,8 @@
 		07FDC9622278873200E620ED /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9612278873200E620ED /* ViewController.m */; };
 		07FDC965227887D800E620ED /* Renderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC964227887D800E620ED /* Renderer.m */; };
 		07FDC96B227889A100E620ED /* GifGunGame.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC96A227889A100E620ED /* GifGunGame.m */; };
+		07FDC97122792FAB00E620ED /* LoadingThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC97022792FAB00E620ED /* LoadingThread.m */; };
+		07FDC9732279331B00E620ED /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9722279331B00E620ED /* shaders.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +45,9 @@
 		07FDC964227887D800E620ED /* Renderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Renderer.m; sourceTree = "<group>"; };
 		07FDC969227889A100E620ED /* GifGunGame.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GifGunGame.h; sourceTree = "<group>"; };
 		07FDC96A227889A100E620ED /* GifGunGame.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GifGunGame.m; sourceTree = "<group>"; };
+		07FDC96F22792FAB00E620ED /* LoadingThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoadingThread.h; sourceTree = "<group>"; };
+		07FDC97022792FAB00E620ED /* LoadingThread.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoadingThread.m; sourceTree = "<group>"; };
+		07FDC9722279331B00E620ED /* shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = shaders.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +84,8 @@
 		07FDC93F2278826500E620ED /* Gif-Gun */ = {
 			isa = PBXGroup;
 			children = (
+				07FDC96F22792FAB00E620ED /* LoadingThread.h */,
+				07FDC97022792FAB00E620ED /* LoadingThread.m */,
 				07FDC95D2278868A00E620ED /* gif_read.cpp */,
 				07FDC95E2278868A00E620ED /* gif_read.h */,
 				07FDC9402278826500E620ED /* AppDelegate.h */,
@@ -96,6 +103,7 @@
 				07FDC964227887D800E620ED /* Renderer.m */,
 				07FDC969227889A100E620ED /* GifGunGame.h */,
 				07FDC96A227889A100E620ED /* GifGunGame.m */,
+				07FDC9722279331B00E620ED /* shaders.metal */,
 			);
 			path = "Gif-Gun";
 			sourceTree = "<group>";
@@ -183,9 +191,11 @@
 				07FDC96B227889A100E620ED /* GifGunGame.m in Sources */,
 				07FDC95C2278841500E620ED /* MetalView.m in Sources */,
 				07FDC965227887D800E620ED /* Renderer.m in Sources */,
+				07FDC97122792FAB00E620ED /* LoadingThread.m in Sources */,
 				07FDC95F2278868A00E620ED /* gif_read.cpp in Sources */,
 				07FDC9422278826500E620ED /* AppDelegate.m in Sources */,
 				07FDC9622278873200E620ED /* ViewController.m in Sources */,
+				07FDC9732279331B00E620ED /* shaders.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

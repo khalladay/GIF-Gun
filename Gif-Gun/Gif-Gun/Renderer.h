@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <MetalKit/MetalKit.h>
-
+#import "LoadingThread.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Scene : NSObject
@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 @end
 
-@interface Renderer : NSObject
+@interface Renderer : NSObject<LoadingThreadDelegate>
 
 -(nonnull instancetype)initWithView:(MTKView*)view;
 -(void)drawInView:(MTKView*)view;
