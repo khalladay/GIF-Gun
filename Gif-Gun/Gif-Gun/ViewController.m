@@ -36,16 +36,24 @@
                                                                userInfo:nil];
     [self.view addTrackingArea:trackingArea];
     
-    NSEventMask eventMask = NSEventMaskKeyDown | NSEventMaskKeyUp | NSEventMaskFlagsChanged | NSEventTypeScrollWheel;
+    NSEventMask eventMask = NSEventMaskKeyDown | NSEventMaskKeyUp;
     [NSEvent addLocalMonitorForEventsMatchingMask:eventMask handler:^NSEvent * _Nullable(NSEvent *event) {
         
-        if (event.type == NSEventTypeKeyDown)
+        if ([[event characters] isEqualToString:@"w"])
         {
-            if ([[event characters] isEqualToString:@"1"])
-            {
-            }
+            [self->_game updateW:event.type==NSEventTypeKeyDown];
         }
         
+        if ([[event characters] isEqualToString:@"s"])
+        {
+            [self->_game updateS:event.type==NSEventTypeKeyDown];
+        }
+        
+        if ([[event characters] isEqualToString:@"e"])
+        {
+            [self->_game spray];
+        }
+
         return event;
         
     }];
@@ -56,6 +64,11 @@
 
 - (void)mouseMoved:(NSEvent *)event
 {
+    NSPoint mousePoint = event.locationInWindow;
+    mousePoint = [_view convertPoint:mousePoint fromView:nil];
+    mousePoint = NSMakePoint(mousePoint.x, _view.bounds.size.height - mousePoint.y);
+    [_game updateMouse:mousePoint];
+
 }
 
 - (void)mouseDown:(NSEvent *)event

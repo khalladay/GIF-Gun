@@ -16,7 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 -(nonnull instancetype)initWithRenderer:(Renderer*)renderer;
 -(void)tick:(double_t)deltaTime;
-
+-(void)updateMouse:(NSPoint)point;
+-(void)updateW:(bool)onoff;
+-(void)updateS:(bool)onoff;
+-(void)spray;
 @end
 
 NS_ASSUME_NONNULL_END

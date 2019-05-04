@@ -14,11 +14,14 @@ NS_ASSUME_NONNULL_BEGIN
 @interface Scene : NSObject
 {
 @public
-    simd_float3 playerPosition;
+    matrix_float4x4 playerTransform;
     simd_float3 cubePositions[6]; //room is built by Axis aligned cubes
     simd_float3 cubeScales[6];
+    simd_float3 cubeColors[6];
     simd_float3 dragonPosition;
 }
+-(nonnull instancetype)initWithScene:(Scene*)scn;
+
 @end
 
 @interface Renderer : NSObject<LoadingThreadDelegate>

@@ -23,6 +23,7 @@
 		07FDC9732279331B00E620ED /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9722279331B00E620ED /* shaders.metal */; };
 		07FDC9762279D90E00E620ED /* cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9742279D90E00E620ED /* cube.obj */; };
 		07FDC9772279D90E00E620ED /* dragon.obj in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9752279D90E00E620ED /* dragon.obj */; };
+		07FDC97A227E1F7D00E620ED /* AAPLMathUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC979227E1F7D00E620ED /* AAPLMathUtilities.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +53,8 @@
 		07FDC9722279331B00E620ED /* shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = shaders.metal; sourceTree = "<group>"; };
 		07FDC9742279D90E00E620ED /* cube.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = cube.obj; path = "Gif-Gun/cube.obj"; sourceTree = "<group>"; };
 		07FDC9752279D90E00E620ED /* dragon.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = dragon.obj; path = "Gif-Gun/dragon.obj"; sourceTree = "<group>"; };
+		07FDC978227E1F7D00E620ED /* AAPLMathUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AAPLMathUtilities.h; sourceTree = "<group>"; };
+		07FDC979227E1F7D00E620ED /* AAPLMathUtilities.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AAPLMathUtilities.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +113,8 @@
 				07FDC969227889A100E620ED /* GifGunGame.h */,
 				07FDC96A227889A100E620ED /* GifGunGame.m */,
 				07FDC9722279331B00E620ED /* shaders.metal */,
+				07FDC978227E1F7D00E620ED /* AAPLMathUtilities.h */,
+				07FDC979227E1F7D00E620ED /* AAPLMathUtilities.m */,
 			);
 			path = "Gif-Gun";
 			sourceTree = "<group>";
@@ -201,6 +206,7 @@
 				07FDC965227887D800E620ED /* Renderer.m in Sources */,
 				07FDC97122792FAB00E620ED /* LoadingThread.m in Sources */,
 				07FDC95F2278868A00E620ED /* gif_read.cpp in Sources */,
+				07FDC97A227E1F7D00E620ED /* AAPLMathUtilities.m in Sources */,
 				07FDC9422278826500E620ED /* AppDelegate.m in Sources */,
 				07FDC9622278873200E620ED /* ViewController.m in Sources */,
 				07FDC9732279331B00E620ED /* shaders.metal in Sources */,

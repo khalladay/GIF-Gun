@@ -9,7 +9,7 @@
 #import "Renderer.h"
 #import <MetalKit/MetalKit.h>
 #import "LoadingThread.h"
-
+#import "AAPLMathUtilities.h"
 const int IN_FLIGHT_FRAMES = 3;
 
 const int MeshTypeCube = 1;
@@ -113,6 +113,8 @@ const int MeshTypeDragon = 2;
     _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
 
     depthStateDesc.depthWriteEnabled = NO;
+    depthStateDesc.depthCompareFunction = MTLCompareFunctionLessEqual;
+
     _wireframeDepthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
 
 }
@@ -125,11 +127,11 @@ const int MeshTypeDragon = 2;
     
     _mdlVertexDescriptor = [MDLVertexDescriptor new];
     _mdlVertexDescriptor.attributes[0] = [[MDLVertexAttribute alloc] initWithName:MDLVertexAttributePosition format:MDLVertexFormatFloat3 offset:0 bufferIndex:0];
-    _mdlVertexDescriptor.attributes[1] = [[MDLVertexAttribute alloc] initWithName:MDLVertexAttributeNormal format:MDLVertexFormatFloat3 offset:sizeof(float) * 3 bufferIndex:0];
-    _mdlVertexDescriptor.attributes[2] = [[MDLVertexAttribute alloc] initWithName:MDLVertexAttributeTextureCoordinate format:MDLVertexFormatFloat2 offset:sizeof(float) * 2 bufferIndex:0];
-
-    _mdlVertexDescriptor.layouts[0] = [[MDLVertexBufferLayout alloc] initWithStride:sizeof(float) * 8];
     
+    _mdlVertexDescriptor.attributes[1] = [[MDLVertexAttribute alloc] initWithName:MDLVertexAttributeNormal format:MDLVertexFormatFloat3 offset:sizeof(float) * 3 bufferIndex:0];
+    
+    _mdlVertexDescriptor.layouts[0] = [[MDLVertexBufferLayout alloc] initWithStride:sizeof(float) * 6];
+
     _vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(_mdlVertexDescriptor);
     
     bufferAlloc = [[MTKMeshBufferAllocator alloc] initWithDevice:_device];
@@ -153,7 +155,7 @@ const int MeshTypeDragon = 2;
 -(void)handleSizeChange:(CGSize)size
 {
     float aspect = size.width / (float)size.height;
-    float fovRadians = 90.0f * (M_PI / 180.0f);
+    float fovRadians = 65.0f * (M_PI / 180.0f);
     float ys = 1 / tanf(fovRadians * 0.5);
     float xs = ys / aspect;
     float nearZ = 0.1;
@@ -188,20 +190,17 @@ const int MeshTypeDragon = 2;
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"Frame";
     
-    MTLRenderPassDescriptor* renderPassDesc = _view.currentRenderPassDescriptor;
-    renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 1.0, 1.0, 0.0);
-    
+    MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
+    renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
+    renderPassDesc.depthAttachment.loadAction = MTLLoadActionClear;
+    renderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
+
     if (renderPassDesc != nil)
     {
         matrix_float4x4 vertexUniforms[2];
         vertexUniforms[0] = _projectionMatrix;
 
-        matrix_float4x4 viewMatrix = (matrix_float4x4){ {
-            { 1, 0, 0, 0 },
-            { 0, 1, 0, 0 },
-            { 0, 0, 1, 1 },
-            { scn->playerPosition.x, scn->playerPosition.y, scn->playerPosition.z, 0 } } };
-
+        matrix_float4x4 viewMatrix = (scn->playerTransform);
         
         id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
         commandEncoder.label = @"RenderEncoder";
@@ -215,12 +214,22 @@ const int MeshTypeDragon = 2;
 
             //fill first
             [commandEncoder setTriangleFillMode:MTLTriangleFillModeFill];
-            [commandEncoder setRenderPipelineState:_staticGeoPipeline];
-            [commandEncoder setDepthStencilState:_depthState];
+
+            [commandEncoder setVertexBuffer:_cubeMesh.vertexBuffers[0].buffer offset:0 atIndex:0];
 
             for (int i = 0; i < 6; ++i)
             {
+                matrix_float4x4 modelMatrix = (matrix_float4x4){ {
+                    {scn->cubeScales[i].x, 0, 0, 0},
+                    {0, scn->cubeScales[i].y, 0, 0},
+                    {0, 0, scn->cubeScales[i].z, 0},
+                    {scn->cubePositions[i].x, scn->cubePositions[i].y, scn->cubePositions[i].z, 1.0f}
+                }};
                 
+                vertexUniforms[1] = matrix_multiply(viewMatrix, modelMatrix);
+                [commandEncoder setVertexBytes:&vertexUniforms length:sizeof(matrix_float4x4)*2 atIndex:1];
+                [commandEncoder setFragmentBytes:&scn->cubeColors[i] length:sizeof(simd_float3) atIndex:1];
+
                 
                 for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
                 {
@@ -228,22 +237,6 @@ const int MeshTypeDragon = 2;
                 }
 
             }
-            
-            //then wireframe
-            [commandEncoder setTriangleFillMode:MTLTriangleFillModeLines];
-            [commandEncoder setRenderPipelineState:_staticWireframePipeline];
-            [commandEncoder setDepthStencilState:_wireframeDepthState];
-
-            for (int i = 0; i < 6; ++i)
-            {
-                for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
-                {
-                    [commandEncoder drawIndexedPrimitives:submesh.primitiveType indexCount:submesh.indexCount indexType:submesh.indexType indexBuffer:submesh.indexBuffer.buffer indexBufferOffset:submesh.indexBuffer.offset];
-                }
-            }
-
-            //then fill
-            [commandEncoder setTriangleFillMode:MTLTriangleFillModeFill];
             [commandEncoder popDebugGroup];
 
         }
@@ -271,9 +264,31 @@ const int MeshTypeDragon = 2;
 - (void)onMeshLoaded:(nonnull MDLAsset *)asset
 {
     _loadedMeshes++;
+    if (_loadedMeshes == MeshTypeCube)
+    {
+        NSArray* meshes = [MTKMesh newMeshesFromAsset:asset device:_device sourceMeshes:nil error:nil];
+        
+        _cubeMesh = meshes[0];
+        
+    }
 }
 
 @end
 
 @implementation Scene
+-(nonnull instancetype)initWithScene:(Scene *)scn
+{
+    NSAssert(scn != nil, @"Attempting to init scene with null source scene");
+    if (self = [super init])
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            cubePositions[i] = scn->cubePositions[i];
+            cubeColors[i] = scn->cubeColors[i];
+            cubeScales[i] = scn->cubeScales[i];
+        }
+        playerTransform = scn->playerTransform;
+    }
+    return self;
+}
 @end
