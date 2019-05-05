@@ -23,32 +23,70 @@ struct VertexOUT
     float2 uv0;
 };
 
+struct FSQuadVertexIN
+{
+    float3 position [[attribute(0)]];
+    float3 normal [[attribute(1)]];
+    float2 texcoord [[attribute(2)]];
+};
+
+struct FSQuadVertexOUT
+{
+    float4 position [[position]];
+    float2 texcoord;
+};
+
 struct Uniforms
 {
     float4x4 projectionMatrix;
     float4x4 modelViewMatrix;
 };
 
-vertex VertexOUT VSMain(VertexIN vIN [[stage_in]],
-                        constant Uniforms& uniforms [[buffer(1)]])
+struct GBufferOUT
+{
+    float4 albedo [[color(0)]];
+    float4 normal [[color(1)]];
+};
+
+vertex VertexOUT GBufferFillVSMain(VertexIN vIN [[stage_in]],
+                        constant Uniforms& uniforms [[buffer(1)]],
+                        constant float3x3& normalMatrix [[buffer(2)]])
 {
     VertexOUT vOUT;
-  //  vOUT.uv0 = vIN.texcoord;
     vOUT.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * float4(vIN.position, 1.0);
-    vOUT.normal = vIN.normal;
+    vOUT.normal = normalMatrix * vIN.normal;
     return vOUT;
 }
 
-fragment float4 FSMain(VertexOUT fIN [[stage_in]],
+fragment GBufferOUT GBufferFillFSMain(VertexOUT fIN [[stage_in]],
                        constant float3& _color [[buffer(1)]])
 {
-    float3 lightDir = normalize(float3(0.35,0.5,-0.75));
-    float d = max(0.0,dot(normalize(fIN.normal), lightDir)) * 1.5;
-    float4 color = float4(_color*d,1) + float4(_color * 0.1,0.0);
-    return color;
+    GBufferOUT OUT;
+    OUT.albedo = float4(_color,1);
+    OUT.normal = float4( (normalize(fIN.normal) *0.5 + 0.5), 0.0);
+    return OUT;
 }
 
-fragment float4 FSMainWire(VertexOUT fIN [[stage_in]])
+vertex FSQuadVertexOUT LightingPassVSMain(FSQuadVertexIN vIN [[stage_in]])
 {
-    return float4(0,0,0,1);
+    FSQuadVertexOUT vOUT;
+    vOUT.position = float4(vIN.position, 1.0);
+    vOUT.texcoord = vIN.texcoord;
+    return vOUT;
+
+}
+
+fragment float4 LightingPassFSMain(FSQuadVertexOUT fIN [[stage_in]],
+                                   texture2d<float, access::sample> GAlbedo [[texture(0)]],
+                                   texture2d<float, access::sample> GNorm [[texture(1)]],
+                                   depth2d<float, access::sample> GDepth [[texture(2)]])
+{
+    constexpr sampler samp;
+
+    float3 lightDir = normalize(float3(0.2,0.5,-1.0));
+    float4 albedo = GAlbedo.sample(samp, fIN.texcoord);
+    float3 normal = (GNorm.sample(samp, fIN.texcoord).xyz * 2.0) - 1.0;
+    float d = max(0.0,dot(normalize(normal), lightDir));
+
+    return float4(albedo.xyz * d + albedo.xyz * 0.2, 1.0);
 }

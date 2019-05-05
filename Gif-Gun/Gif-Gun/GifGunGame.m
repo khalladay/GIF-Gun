@@ -135,7 +135,7 @@
         _mouseDelta = CGPointMake((_lastMousePoint.x - point.x) , (_lastMousePoint.y-point.y) );
         _lastMousePoint = CGPointMake(point.x, point.y);
         yaw += _mouseDelta.x;
-        pitch += _mouseDelta.y;
+        pitch -= _mouseDelta.y;
     }
 }
 
