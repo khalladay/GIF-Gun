@@ -18,11 +18,19 @@ NS_ASSUME_NONNULL_BEGIN
     simd_float3 cubePositions[6]; //room is built by Axis aligned cubes
     simd_float3 cubeScales[6];
     simd_float3 cubeColors[6];
-    simd_float3 dragonPosition;
+    simd_float3 decalPos;
+    simd_float3 decalScale;
 }
+
 -(nonnull instancetype)initWithScene:(Scene*)scn;
 
 @end
+
+typedef enum
+{
+    Default = 0,
+    VisualizePositionBuffer
+}RenderMode;
 
 @interface Renderer : NSObject<LoadingThreadDelegate>
 
@@ -30,7 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 -(void)drawInView:(MTKView*)view;
 -(void)enqeueScene:(Scene*)scn;
 -(void)handleSizeChange:(CGSize)size;
-
+-(void)setRenderMode:(RenderMode)mode;
 @end
 
 NS_ASSUME_NONNULL_END

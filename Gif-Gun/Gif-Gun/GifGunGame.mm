@@ -9,6 +9,7 @@
 #import "GifGunGame.h"
 #import "Renderer.h"
 #import "AAPLMathUtilities.h"
+#include "gif_read.h"
 #define DEG2RAD 0.01745329251
 
 @interface GifGunGame()
@@ -25,6 +26,8 @@
     simd_float3 _playerPos;
     simd_float3 _playerRight;
     simd_float4 _playerForward;
+        
+    gif_read::StreamingCompressedGIF* _gifs;
     
     bool _gotFirstMousePoint;
     bool _forward;
@@ -82,7 +85,9 @@
     _scn->cubeColors[4] = simd_make_float3(1.0,1.0,1.0);
     _scn->cubeColors[5] = simd_make_float3(1.0,0.75,0.75);
 
-    _scn->dragonPosition = simd_make_float3(0,0,0);
+    _scn->decalPos = simd_make_float3(10, 0, 0);
+    _scn->decalScale = simd_make_float3(3, 3, 3);
+    
     [self updatePlayerTransform];
 }
 
@@ -135,7 +140,7 @@
         _mouseDelta = CGPointMake((_lastMousePoint.x - point.x) , (_lastMousePoint.y-point.y) );
         _lastMousePoint = CGPointMake(point.x, point.y);
         yaw += _mouseDelta.x;
-        pitch -= _mouseDelta.y;
+        pitch += _mouseDelta.y;
     }
 }
 

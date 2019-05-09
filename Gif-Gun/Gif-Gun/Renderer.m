@@ -24,9 +24,12 @@ const int MeshTypeDragon = 2;
     
     id<MTLRenderPipelineState> _staticGeoPipeline;
     id<MTLRenderPipelineState> _lightingPassPipeline;
+    id<MTLRenderPipelineState> _visTexturePipeline;
 
     id<MTLRenderPipelineState> _decalPipeline;
     id<MTLDepthStencilState> _depthState;
+    id<MTLDepthStencilState> _decalDepthState;
+
     id<MTLDepthStencilState> _wireframeDepthState;
     MTKView* _view;
     MTKMesh* _cubeMesh;
@@ -46,10 +49,15 @@ const int MeshTypeDragon = 2;
     id<MTLTexture> _gAlbedo[IN_FLIGHT_FRAMES];
     id<MTLTexture> _gNormal[IN_FLIGHT_FRAMES];
     id<MTLTexture> _gDepth[IN_FLIGHT_FRAMES];
-
+    id<MTLTexture> _gPosition[IN_FLIGHT_FRAMES];
+    
     id<MTLBuffer> _fsQuadVertBuffer;
     MTLVertexDescriptor* _fsQuadVertexDescriptor;
     int _loadedMeshes;
+    
+    CGSize _currentResolution;
+    float farClip;
+    RenderMode _mode;
     
 }
 
@@ -76,6 +84,7 @@ const int MeshTypeDragon = 2;
         _sceneLock = [NSLock new];
         _nextFrameIdx = 0;
         _loadedMeshes = 0;
+        _mode = Default;
         
         [self loadMeshes];
         [self buildFullScreenQuad];
@@ -92,7 +101,7 @@ const int MeshTypeDragon = 2;
     texDesc.textureType = MTLTextureType2D;
     texDesc.width = _view.drawableSize.width;
     texDesc.height = _view.drawableSize.height;
-    texDesc.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    texDesc.pixelFormat = MTLPixelFormatRGBA32Float;
     texDesc.storageMode = MTLStorageModePrivate;
     texDesc.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
     
@@ -106,9 +115,10 @@ const int MeshTypeDragon = 2;
     
     for (uint i = 0; i < IN_FLIGHT_FRAMES; ++i)
     {
-        _gAlbedo[i] = [_device newTextureWithDescriptor:texDesc];
-        _gNormal[i] = [_device newTextureWithDescriptor:texDesc];
-        _gDepth[i] = [_device newTextureWithDescriptor:depthBufferDesc];
+        _gAlbedo[i] =   [_device newTextureWithDescriptor:texDesc];
+        _gNormal[i] =   [_device newTextureWithDescriptor:texDesc];
+        _gPosition[i] = [_device newTextureWithDescriptor:texDesc];
+        _gDepth[i] =    [_device newTextureWithDescriptor:depthBufferDesc];
     }
 }
 
@@ -142,6 +152,11 @@ const int MeshTypeDragon = 2;
     
 }
 
+-(void)setRenderMode:(RenderMode)mode
+{
+    _mode = mode;
+}
+
 -(void)buildPipelines
 {
     id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
@@ -153,15 +168,52 @@ const int MeshTypeDragon = 2;
         pipelineDesc.vertexFunction = [defaultLibrary newFunctionWithName:@"GBufferFillVSMain"];
         pipelineDesc.fragmentFunction = [defaultLibrary newFunctionWithName:@"GBufferFillFSMain"];
         pipelineDesc.sampleCount = _view.sampleCount;
-        pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
-        pipelineDesc.colorAttachments[1].pixelFormat = MTLPixelFormatBGRA8Unorm;
+        pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA32Float;
+        pipelineDesc.colorAttachments[1].pixelFormat = MTLPixelFormatRGBA32Float;
+        pipelineDesc.colorAttachments[2].pixelFormat = MTLPixelFormatRGBA32Float;
         pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
-   //     pipelineDesc.s;
         pipelineDesc.vertexDescriptor = _vertexDescriptor;
-        
+                
         NSError *error = Nil;
         _staticGeoPipeline = [_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
         if (!_staticGeoPipeline)
+        {
+            NSLog(@"Failed to created pipeline state, error %@", error);
+        }
+    }
+    
+    {
+        MTLRenderPipelineDescriptor* pipelineDesc = [MTLRenderPipelineDescriptor new];
+        pipelineDesc.label = @"Decals";
+        pipelineDesc.vertexFunction = [defaultLibrary newFunctionWithName:@"DecalVSMain"];
+        pipelineDesc.fragmentFunction = [defaultLibrary newFunctionWithName:@"DecalFSMain"];
+        pipelineDesc.sampleCount = _view.sampleCount;
+        pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA32Float;
+        pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
+        pipelineDesc.vertexDescriptor = _vertexDescriptor;
+        
+        NSError *error = Nil;
+        _decalPipeline = [_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
+        if (!_decalPipeline)
+        {
+            NSLog(@"Failed to created pipeline state, error %@", error);
+        }
+    }
+    
+    {
+        MTLRenderPipelineDescriptor* pipelineDesc = [MTLRenderPipelineDescriptor new];
+        pipelineDesc.label = @"VisualizeTexture";
+        pipelineDesc.vertexFunction = [defaultLibrary newFunctionWithName:@"FSQuadVSMain"];
+        pipelineDesc.fragmentFunction = [defaultLibrary newFunctionWithName:@"VisualizeTextureFSMain"];
+        pipelineDesc.sampleCount = _view.sampleCount;
+        pipelineDesc.colorAttachments[0].pixelFormat = _view.colorPixelFormat;
+        pipelineDesc.depthAttachmentPixelFormat = _view.depthStencilPixelFormat;
+        pipelineDesc.stencilAttachmentPixelFormat = _view.depthStencilPixelFormat;
+        pipelineDesc.vertexDescriptor = _fsQuadVertexDescriptor;
+        
+        NSError *error = Nil;
+        _visTexturePipeline = [_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
+        if (!_visTexturePipeline)
         {
             NSLog(@"Failed to created pipeline state, error %@", error);
         }
@@ -171,7 +223,7 @@ const int MeshTypeDragon = 2;
     {
         MTLRenderPipelineDescriptor* pipelineDesc = [MTLRenderPipelineDescriptor new];
         pipelineDesc.label = @"StaticGeo";
-        pipelineDesc.vertexFunction = [defaultLibrary newFunctionWithName:@"LightingPassVSMain"];
+        pipelineDesc.vertexFunction = [defaultLibrary newFunctionWithName:@"FSQuadVSMain"];
         pipelineDesc.fragmentFunction = [defaultLibrary newFunctionWithName:@"LightingPassFSMain"];
         pipelineDesc.sampleCount = _view.sampleCount;
         pipelineDesc.colorAttachments[0].pixelFormat = _view.colorPixelFormat;
@@ -185,13 +237,17 @@ const int MeshTypeDragon = 2;
         {
             NSLog(@"Failed to created pipeline state, error %@", error);
         }
-
     }
     
     MTLDepthStencilDescriptor *depthStateDesc = [[MTLDepthStencilDescriptor alloc] init];
     depthStateDesc.depthCompareFunction = MTLCompareFunctionLess;
     depthStateDesc.depthWriteEnabled = YES;
     _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
+    
+    depthStateDesc.depthWriteEnabled = NO;
+    depthStateDesc.depthCompareFunction = MTLCompareFunctionAlways;
+    _decalDepthState =[_device newDepthStencilStateWithDescriptor:depthStateDesc];
+
 }
 
 -(void)loadMeshes
@@ -233,12 +289,17 @@ const int MeshTypeDragon = 2;
     float nearZ = 0.1;
     float farZ = 100.0;
     float zs = farZ / (farZ - nearZ);
-    
+        
     _projectionMatrix = (matrix_float4x4){ {
         { xs, 0, 0, 0 },
         { 0, ys, 0, 0 },
         { 0, 0, zs, 1 },
         { 0, 0, -nearZ * zs, 0 } } };
+    
+    _projectionMatrix =  _projectionMatrix;
+    
+    farClip = 100.0;
+    _currentResolution = size;
 }
 
 -(Scene*)nextQueuedScene
@@ -262,100 +323,177 @@ const int MeshTypeDragon = 2;
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"Frame";
     
+    matrix_float4x4 viewMatrix = (scn->playerTransform);
+    matrix_float4x4 vertexUniforms[3];
+    vertexUniforms[0] = _projectionMatrix;
+
+    if (_mode == Default)
     {
-        MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
-        renderPassDesc.colorAttachments[0].texture = _gAlbedo[_nextFrameIdx];
-        renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
-        renderPassDesc.colorAttachments[1].texture = _gNormal[_nextFrameIdx];
-        renderPassDesc.depthAttachment.texture = _gDepth[_nextFrameIdx];
-        renderPassDesc.depthAttachment.loadAction = MTLLoadActionClear;
-        renderPassDesc.depthAttachment.storeAction = MTLStoreActionStore;
-        renderPassDesc.stencilAttachment.texture = nil;
-        renderPassDesc.stencilAttachment.loadAction = MTLLoadActionDontCare;
-        renderPassDesc.stencilAttachment.storeAction = MTLLoadActionDontCare;
-
-        if (renderPassDesc != nil)
         {
-            matrix_float4x4 vertexUniforms[2];
-            vertexUniforms[0] = _projectionMatrix;
+            MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
+            renderPassDesc.colorAttachments[0].texture = _gAlbedo[_nextFrameIdx];
+            renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
+            renderPassDesc.colorAttachments[1].texture = _gNormal[_nextFrameIdx];
+            renderPassDesc.colorAttachments[2].texture = _gPosition[_nextFrameIdx];
+            renderPassDesc.depthAttachment.texture = _gDepth[_nextFrameIdx];
+            renderPassDesc.depthAttachment.loadAction = MTLLoadActionClear;
+            renderPassDesc.depthAttachment.storeAction = MTLStoreActionStore;
+            renderPassDesc.stencilAttachment.texture = nil;
+            renderPassDesc.stencilAttachment.loadAction = MTLLoadActionDontCare;
+            renderPassDesc.stencilAttachment.storeAction = MTLLoadActionDontCare;
 
-            matrix_float4x4 viewMatrix = (scn->playerTransform);
-            
             id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
             commandEncoder.label = @"RenderEncoder";
-            [commandEncoder pushDebugGroup:@"DrawStaticGeo"];
 
-            if (_loadedMeshes >= MeshTypeCube)
+            if (renderPassDesc != nil)
             {
-                [commandEncoder pushDebugGroup:@"Cubes"];
-                [commandEncoder setRenderPipelineState:_staticGeoPipeline];
-                [commandEncoder setDepthStencilState:_depthState];
+                [commandEncoder pushDebugGroup:@"DrawStaticGeo"];
 
-                //fill first
-                [commandEncoder setTriangleFillMode:MTLTriangleFillModeFill];
-
-                [commandEncoder setVertexBuffer:_cubeMesh.vertexBuffers[0].buffer offset:0 atIndex:0];
-
-                for (int i = 0; i < 6; ++i)
+                if (_loadedMeshes >= MeshTypeCube)
                 {
-                    matrix_float4x4 modelMatrix = (matrix_float4x4){ {
-                        {scn->cubeScales[i].x, 0, 0, 0},
-                        {0, scn->cubeScales[i].y, 0, 0},
-                        {0, 0, scn->cubeScales[i].z, 0},
-                        {scn->cubePositions[i].x, scn->cubePositions[i].y, scn->cubePositions[i].z, 1.0f}
-                    }};
-                    
-                    
-                    vertexUniforms[1] = matrix_multiply(viewMatrix, modelMatrix);
-                    matrix_float3x3 normal = matrix_inverse_transpose(matrix3x3_upper_left(modelMatrix));
+                    [commandEncoder pushDebugGroup:@"Cubes"];
+                    [commandEncoder setRenderPipelineState:_staticGeoPipeline];
+                    [commandEncoder setDepthStencilState:_depthState];
+                    [commandEncoder setCullMode:MTLCullModeBack];
+                    //fill first
+                    [commandEncoder setTriangleFillMode:MTLTriangleFillModeFill];
 
-                    [commandEncoder setVertexBytes:&vertexUniforms length:sizeof(matrix_float4x4)*2 atIndex:1];
-                    [commandEncoder setVertexBytes:&normal length:sizeof(matrix_float3x3) atIndex:2];
+                    [commandEncoder setVertexBuffer:_cubeMesh.vertexBuffers[0].buffer offset:0 atIndex:0];
 
-                    [commandEncoder setFragmentBytes:&scn->cubeColors[i] length:sizeof(simd_float3) atIndex:1];
-
-                    
-                    for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
+                    for (int i = 0; i < 6; ++i)
                     {
-                        [commandEncoder drawIndexedPrimitives:submesh.primitiveType indexCount:submesh.indexCount indexType:submesh.indexType indexBuffer:submesh.indexBuffer.buffer indexBufferOffset:submesh.indexBuffer.offset];
+                        matrix_float4x4 modelMatrix = (matrix_float4x4){ {
+                            {scn->cubeScales[i].x, 0, 0, 0},
+                            {0, scn->cubeScales[i].y, 0, 0},
+                            {0, 0, scn->cubeScales[i].z, 0},
+                            {scn->cubePositions[i].x, scn->cubePositions[i].y, scn->cubePositions[i].z, 1.0f}
+                        }};
+                        
+                        
+                        vertexUniforms[1] = matrix_multiply(viewMatrix, modelMatrix);
+                        vertexUniforms[2] = modelMatrix;
+                        matrix_float3x3 normal = matrix_inverse_transpose(matrix3x3_upper_left(modelMatrix));
+
+                        [commandEncoder setVertexBytes:&vertexUniforms length:sizeof(matrix_float4x4)*3 atIndex:1];
+                        [commandEncoder setVertexBytes:&normal length:sizeof(matrix_float3x3) atIndex:2];
+
+                        [commandEncoder setFragmentBytes:&scn->cubeColors[i] length:sizeof(simd_float3) atIndex:1];
+
+                        
+                        for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
+                        {
+                            [commandEncoder drawIndexedPrimitives:submesh.primitiveType indexCount:submesh.indexCount indexType:submesh.indexType indexBuffer:submesh.indexBuffer.buffer indexBufferOffset:submesh.indexBuffer.offset];
+                        }
+
                     }
+                    [commandEncoder popDebugGroup];
 
                 }
+                
                 [commandEncoder popDebugGroup];
 
+                [commandEncoder endEncoding];
+                
             }
-            
-            [commandEncoder popDebugGroup];
+        }
+        
+        //draw decals into color buffer - needs new render pass to commit the depth buffer store
+        {
+            MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
+            renderPassDesc.colorAttachments[0].texture = _gAlbedo[_nextFrameIdx];
+            renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
+            renderPassDesc.colorAttachments[0].loadAction = MTLLoadActionLoad;
+            renderPassDesc.colorAttachments[0].storeAction = MTLStoreActionStore;
+            renderPassDesc.depthAttachment.texture = nil;
+            renderPassDesc.stencilAttachment.texture = nil;
+        
+            if (renderPassDesc != nil)
+            {
+                matrix_float4x4 modelMatrix = (matrix_float4x4){ {
+                    {scn->decalScale.x, 0, 0, 0},
+                    {0, scn->decalScale.y, 0, 0},
+                    {0, 0, scn->decalScale.z, 0},
+                    {scn->decalPos.x, scn->decalPos.y, scn->decalPos.z, 1.0f}
+                }};
+                
+                id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
+                [commandEncoder pushDebugGroup:@"DrawDecals"];
+                [commandEncoder setRenderPipelineState:_decalPipeline];
+                [commandEncoder setDepthStencilState:_decalDepthState];
+                [commandEncoder setVertexBuffer:_cubeMesh.vertexBuffers[0].buffer offset:0 atIndex:0];
+                [commandEncoder setCullMode:MTLCullModeNone];
+                
+                vertexUniforms[1] = matrix_multiply(viewMatrix, modelMatrix);
+                vertexUniforms[2] = modelMatrix;
+                [commandEncoder setVertexBytes:&vertexUniforms length:sizeof(matrix_float4x4)*3 atIndex:1];
+                
+                simd_float2 res = simd_make_float2(_currentResolution.width, _currentResolution.height);
+                [commandEncoder setFragmentBytes:&res length:sizeof(simd_float2) atIndex:0];
+                [commandEncoder setFragmentBytes:&farClip length:sizeof(float) atIndex:1];
 
-            [commandEncoder endEncoding];
-            [commandBuffer presentDrawable:_view.currentDrawable];
-            
+                matrix_float4x4 invViewMatrix = matrix_invert(viewMatrix);
+                [commandEncoder setFragmentBytes:&invViewMatrix length:sizeof(matrix_float4x4) atIndex:2];
+
+                matrix_float4x4 invModelMatrix = matrix_invert(modelMatrix);
+                [commandEncoder setFragmentBytes:&invModelMatrix length:sizeof(matrix_float4x4) atIndex:3];
+
+                [commandEncoder setFragmentTexture:_gDepth[_nextFrameIdx] atIndex:0];
+                [commandEncoder setFragmentTexture:_gPosition[_nextFrameIdx] atIndex:1];
+
+                for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
+                {
+                    [commandEncoder drawIndexedPrimitives:submesh.primitiveType indexCount:submesh.indexCount indexType:submesh.indexType indexBuffer:submesh.indexBuffer.buffer indexBufferOffset:submesh.indexBuffer.offset];
+                }
+                [commandEncoder endEncoding];
+            }
+        }
+        
+        {
+            MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
+            renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
+            renderPassDesc.depthAttachment.loadAction = MTLLoadActionLoad;
+            renderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
+            if (renderPassDesc != nil)
+            {
+                id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
+                commandEncoder.label = @"Full Screen Encoder";
+                [commandEncoder pushDebugGroup:@"LightingPass"];
+                
+                [commandEncoder setRenderPipelineState:_lightingPassPipeline];
+                [commandEncoder setFragmentTexture:_gAlbedo[_nextFrameIdx] atIndex:0];
+                [commandEncoder setFragmentTexture:_gNormal[_nextFrameIdx] atIndex:1];
+                [commandEncoder setFragmentTexture:_gDepth[_nextFrameIdx] atIndex:2];
+
+                [commandEncoder setVertexBuffer:_fsQuadVertBuffer offset:0 atIndex:0];
+                [commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
+                [commandEncoder endEncoding];
+            }
         }
     }
-    
+    else
     {
         MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
         renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
         renderPassDesc.depthAttachment.loadAction = MTLLoadActionLoad;
         renderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
+        
         if (renderPassDesc != nil)
         {
             id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
-            commandEncoder.label = @"Full Screen Encoder";
-            [commandEncoder pushDebugGroup:@"LightingPass"];
+            commandEncoder.label = @"Vis Tex Encoder";
+            [commandEncoder pushDebugGroup:@"VisualizeTexture"];
             
+            [commandEncoder setRenderPipelineState:_visTexturePipeline];
+            [commandEncoder setFragmentTexture:_gPosition[_nextFrameIdx] atIndex:0];
             
-            [commandEncoder setRenderPipelineState:_lightingPassPipeline];
-            [commandEncoder setFragmentTexture:_gAlbedo[_nextFrameIdx] atIndex:0];
-            [commandEncoder setFragmentTexture:_gNormal[_nextFrameIdx] atIndex:1];
-            [commandEncoder setFragmentTexture:_gDepth[_nextFrameIdx] atIndex:2];
-
             [commandEncoder setVertexBuffer:_fsQuadVertBuffer offset:0 atIndex:0];
             [commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
             [commandEncoder endEncoding];
         }
+
     }
-    
+    [commandBuffer presentDrawable:_view.currentDrawable];
+
     __block dispatch_semaphore_t block_sema = _inFlightSemaphore;
     [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> buffer)
      {
@@ -396,6 +534,8 @@ const int MeshTypeDragon = 2;
             cubeScales[i] = scn->cubeScales[i];
         }
         playerTransform = scn->playerTransform;
+        decalScale = scn->decalScale;
+        decalPos = scn->decalPos;
     }
     return self;
 }

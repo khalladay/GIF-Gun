@@ -53,6 +53,16 @@
         {
             [self->_game spray];
         }
+        
+        if ([[event characters] isEqualToString:@"0"])
+        {
+            [self->_renderer setRenderMode:Default];
+        }
+
+        if ([[event characters] isEqualToString:@"1"])
+        {
+            [self->_renderer setRenderMode:VisualizePositionBuffer];
+        }
 
         return event;
         
