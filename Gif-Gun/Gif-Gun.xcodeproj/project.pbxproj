@@ -27,6 +27,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0781A6B02285B20300F2B98A /* shader_structs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = shader_structs.h; sourceTree = "<group>"; };
 		07FDC93D2278826500E620ED /* Gif-Gun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Gif-Gun.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		07FDC9402278826500E620ED /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		07FDC9412278826500E620ED /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -115,6 +116,7 @@
 				07FDC9722279331B00E620ED /* shaders.metal */,
 				07FDC978227E1F7D00E620ED /* AAPLMathUtilities.h */,
 				07FDC979227E1F7D00E620ED /* AAPLMathUtilities.m */,
+				0781A6B02285B20300F2B98A /* shader_structs.h */,
 			);
 			path = "Gif-Gun";
 			sourceTree = "<group>";

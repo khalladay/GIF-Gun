@@ -49,7 +49,7 @@ const int MeshTypeDragon = 2;
     id<MTLTexture> _gAlbedo[IN_FLIGHT_FRAMES];
     id<MTLTexture> _gNormal[IN_FLIGHT_FRAMES];
     id<MTLTexture> _gDepth[IN_FLIGHT_FRAMES];
-    id<MTLTexture> _gPosition[IN_FLIGHT_FRAMES];
+    id<MTLBuffer>  _globalUniforms[IN_FLIGHT_FRAMES];
     
     id<MTLBuffer> _fsQuadVertBuffer;
     MTLVertexDescriptor* _fsQuadVertexDescriptor;
@@ -117,9 +117,9 @@ const int MeshTypeDragon = 2;
     {
         _gAlbedo[i] =   [_device newTextureWithDescriptor:texDesc];
         _gNormal[i] =   [_device newTextureWithDescriptor:texDesc];
-        _gPosition[i] = [_device newTextureWithDescriptor:texDesc];
         _gDepth[i] =    [_device newTextureWithDescriptor:depthBufferDesc];
     }
+    
 }
 
 
@@ -170,7 +170,6 @@ const int MeshTypeDragon = 2;
         pipelineDesc.sampleCount = _view.sampleCount;
         pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA32Float;
         pipelineDesc.colorAttachments[1].pixelFormat = MTLPixelFormatRGBA32Float;
-        pipelineDesc.colorAttachments[2].pixelFormat = MTLPixelFormatRGBA32Float;
         pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
         pipelineDesc.vertexDescriptor = _vertexDescriptor;
                 
@@ -289,15 +288,13 @@ const int MeshTypeDragon = 2;
     float nearZ = 0.1;
     float farZ = 100.0;
     float zs = farZ / (farZ - nearZ);
-        
+    
     _projectionMatrix = (matrix_float4x4){ {
         { xs, 0, 0, 0 },
         { 0, ys, 0, 0 },
         { 0, 0, zs, 1 },
         { 0, 0, -nearZ * zs, 0 } } };
-    
-    _projectionMatrix =  _projectionMatrix;
-    
+        
     farClip = 100.0;
     _currentResolution = size;
 }
@@ -334,7 +331,6 @@ const int MeshTypeDragon = 2;
             renderPassDesc.colorAttachments[0].texture = _gAlbedo[_nextFrameIdx];
             renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
             renderPassDesc.colorAttachments[1].texture = _gNormal[_nextFrameIdx];
-            renderPassDesc.colorAttachments[2].texture = _gPosition[_nextFrameIdx];
             renderPassDesc.depthAttachment.texture = _gDepth[_nextFrameIdx];
             renderPassDesc.depthAttachment.loadAction = MTLLoadActionClear;
             renderPassDesc.depthAttachment.storeAction = MTLStoreActionStore;
@@ -438,7 +434,6 @@ const int MeshTypeDragon = 2;
                 [commandEncoder setFragmentBytes:&invModelMatrix length:sizeof(matrix_float4x4) atIndex:3];
 
                 [commandEncoder setFragmentTexture:_gDepth[_nextFrameIdx] atIndex:0];
-                [commandEncoder setFragmentTexture:_gPosition[_nextFrameIdx] atIndex:1];
 
                 for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
                 {
@@ -484,7 +479,7 @@ const int MeshTypeDragon = 2;
             [commandEncoder pushDebugGroup:@"VisualizeTexture"];
             
             [commandEncoder setRenderPipelineState:_visTexturePipeline];
-            [commandEncoder setFragmentTexture:_gPosition[_nextFrameIdx] atIndex:0];
+            [commandEncoder setFragmentTexture:_gNormal[_nextFrameIdx] atIndex:0];
             
             [commandEncoder setVertexBuffer:_fsQuadVertBuffer offset:0 atIndex:0];
             [commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];

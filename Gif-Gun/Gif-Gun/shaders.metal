@@ -7,6 +7,7 @@
 //
 
 #include <metal_stdlib>
+#include "shader_structs.h"
 using namespace metal;
 
 #pragma mark - Common Types
@@ -55,7 +56,6 @@ struct GBufferOUT
 {
     float4 albedo [[color(0)]];
     float4 normal [[color(1)]];
-    float4 position [[color(2)]];
 };
 
 vertex GBufferVertexOUT GBufferFillVSMain(VertexIN vIN [[stage_in]],
@@ -75,7 +75,6 @@ fragment GBufferOUT GBufferFillFSMain(GBufferVertexOUT fIN [[stage_in]],
     GBufferOUT OUT;
     OUT.albedo = float4(_color,1);
     OUT.normal = float4( (normalize(fIN.normal) *0.5 + 0.5), 0.0);
-    OUT.position = fIN.worldPos;
     return OUT;
 }
 
@@ -98,29 +97,23 @@ vertex DecalVertexOUT DecalVSMain(VertexIN vIN [[stage_in]],
     return vOUT;
 }
 
-
-
 fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
                             constant float2& resolution [[buffer(0)]],
                             constant float& FarClip [[buffer(1)]],
                             constant float4x4& InvViewMatrix [[buffer(2)]],
                             constant float4x4& InvWorldMatrix [[buffer(3)]],
                             depth2d<float, access::sample> GDepth [[texture(0)]],
-                            texture2d<float, access::sample> GWorld[[texture(1)]])
+                            texture2d<float, access::sample> DecalTex [[texture(1)]]
+                            )
 {
     float2 screenPos = fIN.screenPos.xy / fIN.screenPos.w;
     
     //Convert into a texture coordinate
-  //  float2 texCoord = float2( (screenPos.x + 1 ) / 2.0, ( 1.0 - screenPos.y ) /2);
     float2 texCoord = float2(
                              (1 + screenPos.x) / 2 + (0.5 / resolution.x),
                              (1 - screenPos.y) / 2 + (0.5 / resolution.y)
                              );
-//
-    //texCoord.y = 1.0-texCoord.y;
     constexpr sampler samp;
-    
-    
     float4 depth = GDepth.sample(samp, texCoord);
     float linearDepth = linearizeDepth(depth.r, 0.1, FarClip);
     
@@ -129,7 +122,6 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
     //scale down ray to the appropriate length. saves a normalize() call
     float3 viewRay = ( float3(fIN.viewPos.xy / (fIN.viewPos.z), 1.0));
     float3 viewPosition = viewRay * linearDepth;
-   
     float3 worldSpacePos = (InvViewMatrix* float4(viewPosition, 1)).xyz;
     
     //Convert from world space to object space
@@ -137,14 +129,15 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
     
     //Perform bounds check - cube verts are all at 0.5 increments, so if any dimension
     //of objectPosition is outside of -0.5, 0.5, it's not in the box
-    
     float3 absPos = 0.5-abs(objectPosition.xyz);
     if (absPos.x < 0.0 || absPos.y < 0.0 || absPos.z < 0.0)
     {
        discard_fragment();
     }
+    
+    float2 textureCoordinate = objectPosition.xz + 0.5;
 
-    return float4(1,0,0,1);
+    return float4(textureCoordinate, 0,1);
 }
 
 #pragma mark - FullScreenQuad
