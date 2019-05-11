@@ -38,6 +38,8 @@ typedef enum
 -(void)drawInView:(MTKView*)view;
 -(void)enqeueScene:(Scene*)scn;
 -(void)handleSizeChange:(CGSize)size;
+-(void)createDecalTextureWithSize:(CGSize)size data:(const uint8_t*)bytes;
+-(void)updateDecalTexture:(CGSize)size data:(const uint8_t*)bytes;
 -(void)setRenderMode:(RenderMode)mode;
 @end
 

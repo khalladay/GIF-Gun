@@ -56,6 +56,8 @@ const int MeshTypeDragon = 2;
     MTLVertexDescriptor* _fsQuadVertexDescriptor;
     int _loadedMeshes;
     
+    id<MTLTexture> _decalTexture;
+    
     CGSize _currentResolution;
     float farClip;
     RenderMode _mode;
@@ -440,6 +442,7 @@ const int MeshTypeDragon = 2;
                 [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
 
                 [commandEncoder setFragmentTexture:_gDepth[_nextFrameIdx] atIndex:0];
+                [commandEncoder setFragmentTexture:_decalTexture atIndex:1];
 
                 for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
                 {
@@ -518,6 +521,26 @@ const int MeshTypeDragon = 2;
         _cubeMesh = meshes[0];
         
     }
+}
+
+-(void)createDecalTextureWithSize:(CGSize)size data:(const uint8_t*)bytes
+{
+    MTLTextureDescriptor* texDesc = [MTLTextureDescriptor new];
+    texDesc.textureType = MTLTextureType2D;
+    texDesc.pixelFormat = MTLPixelFormatRGBA8Uint;
+    texDesc.height = size.height;
+    texDesc.width = size.width;
+    texDesc.storageMode = MTLStorageModeManaged;
+    texDesc.usage = MTLTextureUsageShaderRead;
+
+    _decalTexture = [_device newTextureWithDescriptor:texDesc];
+    [self updateDecalTexture:size data:bytes];
+
+}
+
+-(void)updateDecalTexture:(CGSize)size data:(const uint8_t *)bytes
+{
+    [_decalTexture replaceRegion:MTLRegionMake2D(0, 0, size.width, size.height) mipmapLevel:0 slice:0 withBytes:bytes bytesPerRow:size.width*4 bytesPerImage:size.width * size.height * 4];
 }
 
 @end

@@ -27,7 +27,7 @@
     simd_float3 _playerRight;
     simd_float4 _playerForward;
         
-    gif_read::StreamingCompressedGIF* _gifs;
+    gif_read::StreamingCompressedGIF* _gif;
     
     bool _gotFirstMousePoint;
     bool _forward;
@@ -55,6 +55,27 @@
         _playerPos = simd_make_float3(-4,1.5,0);
         _playerRotation = quaternion_identity();
         _gotFirstMousePoint = false;
+        
+        NSString * resourcePath = [[NSBundle mainBundle] resourcePath];
+        NSURL* imgURL = [[NSBundle mainBundle] URLForResource:@"snoopy" withExtension:@"gif"];
+        NSString* str = [imgURL path];
+        
+        FILE* fp = fopen([str cStringUsingEncoding:NSUTF8StringEncoding], "rb");
+        fseek(fp, 0, SEEK_END);
+        size_t len = ftell(fp);
+        
+        uint8_t* gifData = (uint8_t*)malloc(len);
+        rewind(fp);
+        fread(gifData, len, 1, fp);
+        
+        _gif = new gif_read::StreamingCompressedGIF(gifData);
+        [_renderer createDecalTextureWithSize:CGSizeMake(_gif->getWidth(), _gif->getHeight()) data:_gif->getCurrentFrame()];
+        
+        free(gifData);
+        fclose(fp);
+        
+    //    gif_read::GIF myGif(gifData);
+
         [self constructScene];
     }
     
@@ -85,7 +106,7 @@
     _scn->cubeColors[4] = simd_make_float3(1.0,1.0,1.0);
     _scn->cubeColors[5] = simd_make_float3(1.0,0.75,0.75);
 
-    _scn->decalPos = simd_make_float3(10.5, -2.5, 0);
+    _scn->decalPos = simd_make_float3(5, -2.5, 0);
     _scn->decalScale = simd_make_float3(3, 3, 3);
     
     [self updatePlayerTransform];
@@ -101,6 +122,8 @@
     [self updatePlayerTransform];
 
     Scene* nextScene = [[Scene alloc] initWithScene:_scn];
+    _gif->tick(deltaTime);
+    [_renderer updateDecalTexture:CGSizeMake(_gif->getWidth(), _gif->getHeight()) data:_gif->getCurrentFrame()];
     [_renderer enqeueScene:nextScene];
 }
 

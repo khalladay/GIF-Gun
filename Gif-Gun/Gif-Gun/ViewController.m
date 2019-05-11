@@ -101,7 +101,7 @@
 
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
-    [_game tick:0.16];
+    [_game tick:0.016];
     [_renderer drawInView:view];
 }
 

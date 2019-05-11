@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0781A6B42287111800F2B98A /* snoopy.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6B32287111700F2B98A /* snoopy.gif */; };
 		07FDC9422278826500E620ED /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9412278826500E620ED /* AppDelegate.m */; };
 		07FDC9442278826700E620ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9432278826700E620ED /* Assets.xcassets */; };
 		07FDC9472278826800E620ED /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9452278826800E620ED /* MainMenu.xib */; };
@@ -28,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		0781A6B02285B20300F2B98A /* shader_structs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = shader_structs.h; sourceTree = "<group>"; };
+		0781A6B32287111700F2B98A /* snoopy.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = snoopy.gif; path = "Gif-Gun/snoopy.gif"; sourceTree = "<group>"; };
 		07FDC93D2278826500E620ED /* Gif-Gun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Gif-Gun.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		07FDC9402278826500E620ED /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		07FDC9412278826500E620ED /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -75,6 +77,7 @@
 		07FDC9342278826500E620ED = {
 			isa = PBXGroup;
 			children = (
+				0781A6B32287111700F2B98A /* snoopy.gif */,
 				07FDC9742279D90E00E620ED /* cube.obj */,
 				07FDC9752279D90E00E620ED /* dragon.obj */,
 				07FDC93F2278826500E620ED /* Gif-Gun */,
@@ -188,6 +191,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0781A6B42287111800F2B98A /* snoopy.gif in Resources */,
 				07FDC9762279D90E00E620ED /* cube.obj in Resources */,
 				07FDC9772279D90E00E620ED /* dragon.obj in Resources */,
 				07FDC9442278826700E620ED /* Assets.xcassets in Resources */,

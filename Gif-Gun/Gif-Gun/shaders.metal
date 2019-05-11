@@ -119,7 +119,7 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
                             constant GlobalUniforms& globals [[buffer(GLOBAL_UNIFORM_INDEX)]],
                             constant ObjectUniforms& primitive [[buffer(OBJECT_UNIFORM_INDEX)]],
                             depth2d<float, access::sample> GDepth [[texture(0)]],
-                            texture2d<float, access::sample> DecalTex [[texture(1)]]
+                            texture2d<uint, access::sample> DecalTex [[texture(1)]]
                             )
 {
     float2 screenPos = fIN.screenPos.xy / fIN.screenPos.w;
@@ -131,7 +131,7 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
                              );
     constexpr sampler samp;
     float4 depth = GDepth.sample(samp, texCoord);
-    float linearDepth = linearizeDepth(depth.r, 0.1, globals.farClip);
+    float linearDepth = linearizeDepth(depth.r, globals.nearClip, globals.farClip);
     
     //creates a ray with a known z position (far clip), so that rather than normalizing
     //this ray and multiplying to scale the length to depth, we can multiply by a value which will
@@ -152,8 +152,8 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
     }
     
     float2 textureCoordinate = objectPosition.xz + 0.5;
-
-    return float4(textureCoordinate, 0,1);
+    uint4 tex = DecalTex.sample(samp, textureCoordinate);
+    return float4(tex.x / 255.0, tex.y / 255.0f, tex.z / 255.0f, 1.0);
 }
 
 #pragma mark - FullScreenQuad
