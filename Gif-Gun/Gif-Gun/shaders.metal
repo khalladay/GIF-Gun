@@ -7,7 +7,6 @@
 //
 
 #include <metal_stdlib>
-#include "shader_structs.h"
 using namespace metal;
 
 #pragma mark - Common Types
@@ -18,11 +17,33 @@ struct VertexIN
     float3 normal [[attribute(1)]];
 };
 
-struct Uniforms
+#define GLOBAL_UNIFORM_INDEX 1
+#define OBJECT_UNIFORM_INDEX 2
+
+//alignment rules: the largest alignment in the struct determines total struct alignment
+//ie: float4x4 is 16 byte aligned, this is the largest alignment requirement of all types
+//so the struct must be 16 byte aligned. Actual size of struct is 64 * 4 + 4 * 2, but that
+//needs to be rounded up the the next 16 byte aligned value, which is 272
+struct GlobalUniforms
 {
     float4x4 projectionMatrix;
+    float4x4 inv_projectionMatrix;
+    float4x4 viewMatrix;
+    float4x4 inv_viewMatrix;
+    int2     resolution;
+    float nearClip;
+    float farClip;
+    
+};
+
+static_assert(sizeof(GlobalUniforms) == 272, "Looks like the global uniform buffer size has changed, make sure to copy changes to this struct to the corresponding struct in shader_structs.h");
+
+struct ObjectUniforms
+{
     float4x4 modelViewMatrix;
     float4x4 modelMatrix;
+    float4x4 inv_modelMatrix;
+    float3x3 normalMatrix;
 };
 
 #pragma mark - Common Functions
@@ -36,10 +57,7 @@ float linearizeDepth(float d, float nearClip, float farClip)
     // Sample the depth and convert to linear view space Z (assume it gets sampled as
     // a floating point value of the range [0,1])
     float linearDepth = ProjectionB / (d - ProjectionA);
-    
     return linearDepth;
-
-   
 }
 
 #pragma mark - GBufferFill
@@ -59,18 +77,18 @@ struct GBufferOUT
 };
 
 vertex GBufferVertexOUT GBufferFillVSMain(VertexIN vIN [[stage_in]],
-                        constant Uniforms& uniforms [[buffer(1)]],
-                        constant float3x3& normalMatrix [[buffer(2)]])
+                        constant GlobalUniforms& globals [[buffer(GLOBAL_UNIFORM_INDEX)]],
+                        constant ObjectUniforms& primitive [[buffer(OBJECT_UNIFORM_INDEX)]])
 {
     GBufferVertexOUT vOUT;
-    vOUT.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * float4(vIN.position, 1.0);
-    vOUT.normal = normalMatrix * vIN.normal;
-    vOUT.worldPos = uniforms.modelMatrix * float4(vIN.position, 1.0);
+    vOUT.position = globals.projectionMatrix * primitive.modelViewMatrix * float4(vIN.position, 1.0);
+    vOUT.normal = primitive.normalMatrix * vIN.normal;
+    vOUT.worldPos = primitive.modelMatrix * float4(vIN.position, 1.0);
     return vOUT;
 }
 
 fragment GBufferOUT GBufferFillFSMain(GBufferVertexOUT fIN [[stage_in]],
-                       constant float3& _color [[buffer(1)]])
+                       constant float3& _color [[buffer(0)]])
 {
     GBufferOUT OUT;
     OUT.albedo = float4(_color,1);
@@ -86,22 +104,20 @@ struct DecalVertexOUT
     float4 viewPos;
 };
 
-
 vertex DecalVertexOUT DecalVSMain(VertexIN vIN [[stage_in]],
-                                  constant Uniforms& uniforms [[buffer(1)]])
+                                  constant GlobalUniforms& globals [[buffer(GLOBAL_UNIFORM_INDEX)]],
+                                  constant ObjectUniforms& primitive [[buffer(OBJECT_UNIFORM_INDEX)]])
 {
     DecalVertexOUT vOUT;
-    vOUT.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * float4(vIN.position, 1.0);
-    vOUT.viewPos = uniforms.modelViewMatrix * float4(vIN.position, 1.0);
+    vOUT.position = globals.projectionMatrix * primitive.modelViewMatrix * float4(vIN.position, 1.0);
+    vOUT.viewPos = primitive.modelViewMatrix * float4(vIN.position, 1.0);
     vOUT.screenPos = vOUT.position;
     return vOUT;
 }
 
 fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
-                            constant float2& resolution [[buffer(0)]],
-                            constant float& FarClip [[buffer(1)]],
-                            constant float4x4& InvViewMatrix [[buffer(2)]],
-                            constant float4x4& InvWorldMatrix [[buffer(3)]],
+                            constant GlobalUniforms& globals [[buffer(GLOBAL_UNIFORM_INDEX)]],
+                            constant ObjectUniforms& primitive [[buffer(OBJECT_UNIFORM_INDEX)]],
                             depth2d<float, access::sample> GDepth [[texture(0)]],
                             texture2d<float, access::sample> DecalTex [[texture(1)]]
                             )
@@ -110,22 +126,22 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
     
     //Convert into a texture coordinate
     float2 texCoord = float2(
-                             (1 + screenPos.x) / 2 + (0.5 / resolution.x),
-                             (1 - screenPos.y) / 2 + (0.5 / resolution.y)
+                             (1 + screenPos.x) / 2 + (0.5 / globals.resolution.x),
+                             (1 - screenPos.y) / 2 + (0.5 / globals.resolution.y)
                              );
     constexpr sampler samp;
     float4 depth = GDepth.sample(samp, texCoord);
-    float linearDepth = linearizeDepth(depth.r, 0.1, FarClip);
+    float linearDepth = linearizeDepth(depth.r, 0.1, globals.farClip);
     
     //creates a ray with a known z position (far clip), so that rather than normalizing
     //this ray and multiplying to scale the length to depth, we can multiply by a value which will
     //scale down ray to the appropriate length. saves a normalize() call
     float3 viewRay = ( float3(fIN.viewPos.xy / (fIN.viewPos.z), 1.0));
     float3 viewPosition = viewRay * linearDepth;
-    float3 worldSpacePos = (InvViewMatrix* float4(viewPosition, 1)).xyz;
+    float3 worldSpacePos = (globals.inv_viewMatrix* float4(viewPosition, 1)).xyz;
     
     //Convert from world space to object space
-    float4 objectPosition = ( InvWorldMatrix* float4(worldSpacePos, 1));
+    float4 objectPosition = ( primitive.inv_modelMatrix * float4(worldSpacePos, 1));
     
     //Perform bounds check - cube verts are all at 0.5 increments, so if any dimension
     //of objectPosition is outside of -0.5, 0.5, it's not in the box

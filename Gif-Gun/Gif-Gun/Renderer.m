@@ -10,6 +10,7 @@
 #import <MetalKit/MetalKit.h>
 #import "LoadingThread.h"
 #import "AAPLMathUtilities.h"
+#import "shader_structs.h"
 const int IN_FLIGHT_FRAMES = 3;
 
 const int MeshTypeCube = 1;
@@ -118,6 +119,7 @@ const int MeshTypeDragon = 2;
         _gAlbedo[i] =   [_device newTextureWithDescriptor:texDesc];
         _gNormal[i] =   [_device newTextureWithDescriptor:texDesc];
         _gDepth[i] =    [_device newTextureWithDescriptor:depthBufferDesc];
+        _globalUniforms[i] = [_device newBufferWithLength:sizeof(GlobalUniforms) options:MTLResourceStorageModeShared];
     }
     
 }
@@ -315,14 +317,25 @@ const int MeshTypeDragon = 2;
 {
     dispatch_semaphore_wait(_inFlightSemaphore, DISPATCH_TIME_FOREVER);
     if ([_queuedScenes count] < 1) return;
+    
     Scene* scn = [self nextQueuedScene];
+    
+    GlobalUniforms globalUniforms;
+    globalUniforms.viewMatrix = scn->playerTransform;
+    globalUniforms.projectionMatrix = _projectionMatrix;
+    globalUniforms.inv_viewMatrix = matrix_invert(globalUniforms.viewMatrix);
+    globalUniforms.inv_projectionMatrix = matrix_invert(globalUniforms.projectionMatrix);
+    globalUniforms.farClip = farClip;
+    globalUniforms.nearClip = 0.1;
+    globalUniforms.resolution.x = _currentResolution.width;
+    globalUniforms.resolution.y = _currentResolution.height;
+    memcpy(_globalUniforms[_nextFrameIdx].contents, &globalUniforms, sizeof(GlobalUniforms));
+
 
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"Frame";
     
-    matrix_float4x4 viewMatrix = (scn->playerTransform);
-    matrix_float4x4 vertexUniforms[3];
-    vertexUniforms[0] = _projectionMatrix;
+    ObjectUniforms objectUniforms;
 
     if (_mode == Default)
     {
@@ -353,8 +366,8 @@ const int MeshTypeDragon = 2;
                     [commandEncoder setCullMode:MTLCullModeBack];
                     //fill first
                     [commandEncoder setTriangleFillMode:MTLTriangleFillModeFill];
-
                     [commandEncoder setVertexBuffer:_cubeMesh.vertexBuffers[0].buffer offset:0 atIndex:0];
+                    [commandEncoder setVertexBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
 
                     for (int i = 0; i < 6; ++i)
                     {
@@ -365,16 +378,13 @@ const int MeshTypeDragon = 2;
                             {scn->cubePositions[i].x, scn->cubePositions[i].y, scn->cubePositions[i].z, 1.0f}
                         }};
                         
-                        
-                        vertexUniforms[1] = matrix_multiply(viewMatrix, modelMatrix);
-                        vertexUniforms[2] = modelMatrix;
-                        matrix_float3x3 normal = matrix_inverse_transpose(matrix3x3_upper_left(modelMatrix));
-
-                        [commandEncoder setVertexBytes:&vertexUniforms length:sizeof(matrix_float4x4)*3 atIndex:1];
-                        [commandEncoder setVertexBytes:&normal length:sizeof(matrix_float3x3) atIndex:2];
-
-                        [commandEncoder setFragmentBytes:&scn->cubeColors[i] length:sizeof(simd_float3) atIndex:1];
-
+                        objectUniforms.modelMatrix = modelMatrix;
+                        objectUniforms.inv_modelMatrix = matrix_invert(modelMatrix);
+                        objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(modelMatrix));
+                        objectUniforms.modelViewMatrix = matrix_multiply(globalUniforms.viewMatrix, modelMatrix);
+                
+                        [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+                        [commandEncoder setFragmentBytes:&scn->cubeColors[i] length:sizeof(simd_float3) atIndex:0];
                         
                         for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
                         {
@@ -418,20 +428,16 @@ const int MeshTypeDragon = 2;
                 [commandEncoder setDepthStencilState:_decalDepthState];
                 [commandEncoder setVertexBuffer:_cubeMesh.vertexBuffers[0].buffer offset:0 atIndex:0];
                 [commandEncoder setCullMode:MTLCullModeNone];
-                
-                vertexUniforms[1] = matrix_multiply(viewMatrix, modelMatrix);
-                vertexUniforms[2] = modelMatrix;
-                [commandEncoder setVertexBytes:&vertexUniforms length:sizeof(matrix_float4x4)*3 atIndex:1];
-                
-                simd_float2 res = simd_make_float2(_currentResolution.width, _currentResolution.height);
-                [commandEncoder setFragmentBytes:&res length:sizeof(simd_float2) atIndex:0];
-                [commandEncoder setFragmentBytes:&farClip length:sizeof(float) atIndex:1];
+                [commandEncoder setVertexBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
+                [commandEncoder setFragmentBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
 
-                matrix_float4x4 invViewMatrix = matrix_invert(viewMatrix);
-                [commandEncoder setFragmentBytes:&invViewMatrix length:sizeof(matrix_float4x4) atIndex:2];
-
-                matrix_float4x4 invModelMatrix = matrix_invert(modelMatrix);
-                [commandEncoder setFragmentBytes:&invModelMatrix length:sizeof(matrix_float4x4) atIndex:3];
+                objectUniforms.modelMatrix = modelMatrix;
+                objectUniforms.inv_modelMatrix = matrix_invert(modelMatrix);
+                objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(modelMatrix));
+                objectUniforms.modelViewMatrix = matrix_multiply(globalUniforms.viewMatrix, modelMatrix);
+                
+                [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+                [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
 
                 [commandEncoder setFragmentTexture:_gDepth[_nextFrameIdx] atIndex:0];
 
