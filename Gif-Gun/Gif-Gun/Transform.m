@@ -36,10 +36,9 @@
     matrix = matrix_multiply(matrix4x4_from_quaternion(rotation), matrix);
     matrix = matrix_multiply(matrix4x4_translation(position), matrix);
     
-
-    up = matrix_multiply(matrix, (simd_make_float4(0,1,0,0))).xyz;
-    right = quaternion_rotate_vector(rotation, simd_make_float3(1,0,0));// (matrix, (simd_make_float4(1,0,0,0))).xyz;
-    forward = matrix_multiply(matrix, (simd_make_float4(0,0,1,0))).xyz;
+    up = quaternion_rotate_vector(rotation, simd_make_float3(0,1,0));
+    right = quaternion_rotate_vector(rotation, simd_make_float3(1,0,0));
+    forward = quaternion_rotate_vector(rotation, simd_make_float3(0,0,1));
 }
 
 -(void)rotateOnAxis:(simd_float3)axis angle:(float)degrees
