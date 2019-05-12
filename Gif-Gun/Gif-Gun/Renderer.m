@@ -323,7 +323,7 @@ const int MeshTypeDragon = 2;
     Scene* scn = [self nextQueuedScene];
     
     GlobalUniforms globalUniforms;
-    globalUniforms.viewMatrix = scn->playerTransform;
+    globalUniforms.viewMatrix = matrix_invert(scn->playerTransform);
     globalUniforms.projectionMatrix = _projectionMatrix;
     globalUniforms.inv_viewMatrix = matrix_invert(globalUniforms.viewMatrix);
     globalUniforms.inv_projectionMatrix = matrix_invert(globalUniforms.projectionMatrix);
@@ -339,7 +339,6 @@ const int MeshTypeDragon = 2;
     
     ObjectUniforms objectUniforms;
 
-    if (_mode == Default)
     {
         {
             MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
@@ -474,7 +473,8 @@ const int MeshTypeDragon = 2;
             }
         }
     }
-    else
+    
+    if (_mode == VisualizePositionBuffer)
     {
         MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
         renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
@@ -557,7 +557,9 @@ const int MeshTypeDragon = 2;
             cubeColors[i] = scn->cubeColors[i];
             cubeScales[i] = scn->cubeScales[i];
         }
-        playerTransform = scn->playerTransform;
+    
+        
+        playerTransform = matrix_multiply(matrix_identity_float4x4, scn->playerTransform);
         decalScale = scn->decalScale;
         decalPos = scn->decalPos;
     }

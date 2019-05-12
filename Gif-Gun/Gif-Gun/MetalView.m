@@ -51,6 +51,16 @@
     return self;
 }
 
+-(BOOL)acceptsFirstResponder
+{
+    return YES;
+}
+
+-(void)keyDown:(NSEvent *)event
+{
+    
+}
+
 - (void)initView
 {
     self.depthStencilPixelFormat = MTLPixelFormatDepth32Float_Stencil8;

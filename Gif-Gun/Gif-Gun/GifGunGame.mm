@@ -10,33 +10,26 @@
 #import "Renderer.h"
 #import "AAPLMathUtilities.h"
 #include "gif_read.h"
+#include "Transform.h"
 #define DEG2RAD 0.01745329251
 
 @interface GifGunGame()
 {
     Renderer* _renderer;
     Scene* _scn;
-    quaternion_float _playerRotation;
     
     simd_float3 _playerBounds; //player is modelled as a cube collider
     
-    CGPoint _lastMousePoint;
-    CGPoint _mouseDelta;
-    
-    simd_float3 _playerPos;
-    simd_float3 _playerRight;
-    simd_float4 _playerForward;
-        
     gif_read::StreamingCompressedGIF* _gif;
     
-    bool _gotFirstMousePoint;
     bool _forward;
     bool _back;
-    float pitch;
-    float yaw;
+    bool _left;
+    bool _right;
+    
+    Transform* _playerTransform;
 }
 
--(void)updatePlayerTransform;
 -(void)constructScene;
 
 @end
@@ -50,13 +43,10 @@
     {
         NSAssert(renderer, @"initializing SphereGame with nil renderer");
         _renderer = renderer;
-        _playerRight = simd_make_float3(1,0,0);
-        _playerForward = simd_make_float4(0,0,1,0);
-        _playerPos = simd_make_float3(-4,1.5,0);
-        _playerRotation = quaternion_identity();
-        _gotFirstMousePoint = false;
+        _playerTransform = [Transform new];
+        [_playerTransform setPosition:simd_make_float3(-4, 1.5, 0)];
+        [_playerTransform rotateOnAxis:simd_make_float3(0, 1, 0) angle:45.0];
         
-        NSString * resourcePath = [[NSBundle mainBundle] resourcePath];
         NSURL* imgURL = [[NSBundle mainBundle] URLForResource:@"snoopy" withExtension:@"gif"];
         NSString* str = [imgURL path];
         
@@ -74,8 +64,6 @@
         free(gifData);
         fclose(fp);
         
-    //    gif_read::GIF myGif(gifData);
-
         [self constructScene];
     }
     
@@ -108,18 +96,20 @@
 
     _scn->decalPos = simd_make_float3(5, -2.5, 0);
     _scn->decalScale = simd_make_float3(3, 3, 3);
-    
-    [self updatePlayerTransform];
 }
 
 -(void)tick:(double_t)deltaTime
 {
     const float speed = 0.1f;
-    simd_float3 vel = simd_make_float3(_playerForward.x *speed, _playerForward.y * speed, _playerForward.z * speed);
+    simd_float3 vel = simd_make_float3(0,0,0);
     
-    if (_forward)_playerPos += vel;
-    if (_back) _playerPos -=vel;
-    [self updatePlayerTransform];
+    if (_forward) vel += _playerTransform->forward;
+    if (_back) vel -= _playerTransform->forward;
+    if (_left) vel -= _playerTransform->right;
+    if (_right) vel += _playerTransform->right;
+    if (simd_length(vel) > 0) vel = simd_normalize(vel) * speed;
+    [_playerTransform translate:vel];
+    _scn->playerTransform = _playerTransform->matrix;
 
     Scene* nextScene = [[Scene alloc] initWithScene:_scn];
     _gif->tick(deltaTime);
@@ -137,34 +127,22 @@
     _back = onoff;
 }
 
-
--(void)updatePlayerTransform
+-(void)updateA:(bool)onoff
 {
-    simd_float4 front;
-    
-    front.x = cos(DEG2RAD*(pitch)) * cos(DEG2RAD*(yaw));
-    front.y = sin(DEG2RAD*(pitch));
-    front.z = cos(DEG2RAD*(pitch)) * sin(DEG2RAD*(yaw));
-    front.w = 0;
-    _playerForward = simd_normalize(front);
-    _scn->playerTransform = matrix_look_at_left_hand(_playerPos, _playerPos + _playerForward.xyz, simd_make_float3(0,1,0));
+    _left = onoff;
 }
 
--(void)updateMouse:(NSPoint)point
+-(void)updateD:(bool)onoff
 {
-    if (!_gotFirstMousePoint)
-    {
-        _lastMousePoint = CGPointMake(point.x, point.y);
-        _mouseDelta = CGPointMake(0, 0);
-        _gotFirstMousePoint = true;
-    }
-    else
-    {
-        _mouseDelta = CGPointMake((_lastMousePoint.x - point.x) , (_lastMousePoint.y-point.y) );
-        _lastMousePoint = CGPointMake(point.x, point.y);
-        yaw += _mouseDelta.x;
-        pitch += _mouseDelta.y;
-    }
+    _right = onoff;
+}
+
+-(bool)updateMouse:(CGPoint)mouseDelta
+{    
+    [_playerTransform rotateOnAxis:simd_make_float3(0,1,0) angle:mouseDelta.x*0.25];
+    [_playerTransform rotateOnAxis:_playerTransform->right angle:mouseDelta.y*0.25];
+
+    return true;
 }
 
 -(void)spray

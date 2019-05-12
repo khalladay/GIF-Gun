@@ -27,9 +27,13 @@
     
     _view = (MetalView*)self.view;
     _view.delegate = self;
+    [_view becomeFirstResponder];
     _renderer = [[Renderer alloc] initWithView:_view];
     _game = [[GifGunGame alloc] initWithRenderer:_renderer];
-    
+    CGAssociateMouseAndMouseCursorPosition(false);
+    CGDisplayMoveCursorToPoint(CGMainDisplayID(), CGPointMake([_view window].frame.origin.x + [_view window].frame.size.width*0.5, [_view window].frame.origin.y - [_view window].frame.size.height*0.5));
+    [NSCursor hide];
+
     NSTrackingArea *trackingArea = [[NSTrackingArea alloc] initWithRect:NSZeroRect
                                                                 options:NSTrackingMouseMoved | NSTrackingInVisibleRect | NSTrackingActiveAlways
                                                                   owner:self
@@ -47,6 +51,16 @@
         if ([[event characters] isEqualToString:@"s"])
         {
             [self->_game updateS:event.type==NSEventTypeKeyDown];
+        }
+        
+        if ([[event characters] isEqualToString:@"a"])
+        {
+            [self->_game updateA:event.type==NSEventTypeKeyDown];
+        }
+        
+        if ([[event characters] isEqualToString:@"d"])
+        {
+            [self->_game updateD:event.type==NSEventTypeKeyDown];
         }
         
         if ([[event characters] isEqualToString:@"e"])
@@ -74,10 +88,19 @@
 
 - (void)mouseMoved:(NSEvent *)event
 {
-    NSPoint mousePoint = event.locationInWindow;
-    mousePoint = [_view convertPoint:mousePoint fromView:nil];
-    mousePoint = NSMakePoint(mousePoint.x, _view.bounds.size.height - mousePoint.y);
-    [_game updateMouse:mousePoint];
+    static bool first = false;
+    if (first)
+    {
+        [_game updateMouse:CGPointMake(event.deltaX, event.deltaY)];
+    }
+    else
+    {
+        first = true;
+    }
+}
+
+-(void)mouseExited:(NSEvent *)event
+{
 
 }
 

@@ -16,9 +16,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 -(nonnull instancetype)initWithRenderer:(Renderer*)renderer;
 -(void)tick:(double_t)deltaTime;
--(void)updateMouse:(NSPoint)point;
+-(bool)updateMouse:(CGPoint)delta;
+
 -(void)updateW:(bool)onoff;
 -(void)updateS:(bool)onoff;
+-(void)updateA:(bool)onoff;
+-(void)updateD:(bool)onoff;
+
+
 -(void)spray;
 @end
 
