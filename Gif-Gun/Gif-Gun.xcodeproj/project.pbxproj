@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		0781A6B42287111800F2B98A /* snoopy.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6B32287111700F2B98A /* snoopy.gif */; };
 		0781A6B72287524400F2B98A /* Transform.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6B62287524400F2B98A /* Transform.m */; };
+		0781A6BA2288805B00F2B98A /* BoxCollider.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6B92288805B00F2B98A /* BoxCollider.m */; };
+		0781A6BD228882CA00F2B98A /* Ray.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6BC228882CA00F2B98A /* Ray.m */; };
+		0781A6BF228AFF8600F2B98A /* CollisionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6BE228AFF8600F2B98A /* CollisionTests.m */; };
 		07FDC9422278826500E620ED /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9412278826500E620ED /* AppDelegate.m */; };
 		07FDC9442278826700E620ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9432278826700E620ED /* Assets.xcassets */; };
 		07FDC9472278826800E620ED /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9452278826800E620ED /* MainMenu.xib */; };
@@ -33,6 +36,12 @@
 		0781A6B32287111700F2B98A /* snoopy.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = snoopy.gif; path = "Gif-Gun/snoopy.gif"; sourceTree = "<group>"; };
 		0781A6B52287524400F2B98A /* Transform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Transform.h; sourceTree = "<group>"; };
 		0781A6B62287524400F2B98A /* Transform.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Transform.m; sourceTree = "<group>"; };
+		0781A6B82288805B00F2B98A /* BoxCollider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BoxCollider.h; sourceTree = "<group>"; };
+		0781A6B92288805B00F2B98A /* BoxCollider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BoxCollider.m; sourceTree = "<group>"; };
+		0781A6BB228882CA00F2B98A /* Ray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Ray.h; sourceTree = "<group>"; };
+		0781A6BC228882CA00F2B98A /* Ray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Ray.m; sourceTree = "<group>"; };
+		0781A6BE228AFF8600F2B98A /* CollisionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CollisionTests.m; sourceTree = "<group>"; };
+		0781A6C0228AFF9100F2B98A /* CollisionTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CollisionTests.h; sourceTree = "<group>"; };
 		07FDC93D2278826500E620ED /* Gif-Gun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Gif-Gun.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		07FDC9402278826500E620ED /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		07FDC9412278826500E620ED /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -120,6 +129,12 @@
 				07FDC969227889A100E620ED /* GifGunGame.h */,
 				07FDC96A227889A100E620ED /* GifGunGame.mm */,
 				07FDC9722279331B00E620ED /* shaders.metal */,
+				0781A6C0228AFF9100F2B98A /* CollisionTests.h */,
+				0781A6BE228AFF8600F2B98A /* CollisionTests.m */,
+				0781A6BB228882CA00F2B98A /* Ray.h */,
+				0781A6BC228882CA00F2B98A /* Ray.m */,
+				0781A6B82288805B00F2B98A /* BoxCollider.h */,
+				0781A6B92288805B00F2B98A /* BoxCollider.m */,
 				07FDC978227E1F7D00E620ED /* AAPLMathUtilities.h */,
 				07FDC979227E1F7D00E620ED /* AAPLMathUtilities.m */,
 				0781A6B02285B20300F2B98A /* shader_structs.h */,
@@ -214,8 +229,11 @@
 				07FDC94A2278826800E620ED /* main.m in Sources */,
 				0781A6B72287524400F2B98A /* Transform.m in Sources */,
 				07FDC96B227889A100E620ED /* GifGunGame.mm in Sources */,
+				0781A6BA2288805B00F2B98A /* BoxCollider.m in Sources */,
 				07FDC95C2278841500E620ED /* MetalView.m in Sources */,
 				07FDC965227887D800E620ED /* Renderer.m in Sources */,
+				0781A6BF228AFF8600F2B98A /* CollisionTests.m in Sources */,
+				0781A6BD228882CA00F2B98A /* Ray.m in Sources */,
 				07FDC97122792FAB00E620ED /* LoadingThread.m in Sources */,
 				07FDC95F2278868A00E620ED /* gif_read.cpp in Sources */,
 				07FDC97A227E1F7D00E620ED /* AAPLMathUtilities.m in Sources */,

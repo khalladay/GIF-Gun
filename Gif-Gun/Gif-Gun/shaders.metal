@@ -77,8 +77,8 @@ struct GBufferOUT
 };
 
 vertex GBufferVertexOUT GBufferFillVSMain(VertexIN vIN [[stage_in]],
-                        constant GlobalUniforms& globals [[buffer(GLOBAL_UNIFORM_INDEX)]],
-                        constant ObjectUniforms& primitive [[buffer(OBJECT_UNIFORM_INDEX)]])
+                                          constant GlobalUniforms& globals [[buffer(GLOBAL_UNIFORM_INDEX)]],
+                                          constant ObjectUniforms& primitive [[buffer(OBJECT_UNIFORM_INDEX)]])
 {
     GBufferVertexOUT vOUT;
     vOUT.position = globals.projectionMatrix * primitive.modelViewMatrix * float4(vIN.position, 1.0);
@@ -88,7 +88,7 @@ vertex GBufferVertexOUT GBufferFillVSMain(VertexIN vIN [[stage_in]],
 }
 
 fragment GBufferOUT GBufferFillFSMain(GBufferVertexOUT fIN [[stage_in]],
-                       constant float3& _color [[buffer(0)]])
+                                      constant float3& _color [[buffer(0)]])
 {
     GBufferOUT OUT;
     OUT.albedo = float4(_color,1);
@@ -119,7 +119,8 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
                             constant GlobalUniforms& globals [[buffer(GLOBAL_UNIFORM_INDEX)]],
                             constant ObjectUniforms& primitive [[buffer(OBJECT_UNIFORM_INDEX)]],
                             depth2d<float, access::sample> GDepth [[texture(0)]],
-                            texture2d<uint, access::sample> DecalTex [[texture(1)]]
+                            texture2d<float, access::sample> GNormal [[texture(1)]],
+                            texture2d<uint, access::sample> DecalTex [[texture(2)]]
                             )
 {
     float2 screenPos = fIN.screenPos.xy / fIN.screenPos.w;
@@ -129,8 +130,15 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
                              (1 + screenPos.x) / 2 + (0.5 / globals.resolution.x),
                              (1 - screenPos.y) / 2 + (0.5 / globals.resolution.y)
                              );
-    constexpr sampler samp;
+    constexpr sampler samp(coord::normalized,
+                           address::repeat,
+                           filter::linear);
+    
     float4 depth = GDepth.sample(samp, texCoord);
+    float3 norm = normalize( (GNormal.sample(samp, texCoord).xyz - 0.5) * 2.0);
+    
+    float3 vsNorm = normalize(primitive.inv_modelMatrix * float4(norm, 0.0)).xyz;
+    
     float linearDepth = linearizeDepth(depth.r, globals.nearClip, globals.farClip);
     
     //creates a ray with a known z position (far clip), so that rather than normalizing
@@ -148,10 +156,77 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
     float3 absPos = 0.5-abs(objectPosition.xyz);
     if (absPos.x < 0.0 || absPos.y < 0.0 || absPos.z < 0.0)
     {
-       discard_fragment();
+        discard_fragment();
     }
     
-    float2 textureCoordinate = objectPosition.xz + 0.5;
+    float2 textureCoordinate = objectPosition.xz;
+    
+    //wrap the texture coordinates around the geometry
+    float2 xDeltVec = float2( (dfdx(objectPosition.x)), (dfdy(objectPosition.x)) );
+   // float2 yDeltVec = float2( (dfdx(objectPosition.y)), (dfdy(objectPosition.y)) );
+    float2 zDeltVec = float2( (dfdx(objectPosition.z)), (dfdy(objectPosition.z)) );
+    
+    float2 xDeltAbs = (abs(xDeltVec));
+    float2 zDeltAbs = (abs(zDeltVec));
+
+    
+    if (xDeltAbs.x < 0.0001 && xDeltAbs.y < 0.0001) discard_fragment();
+    if (zDeltAbs.x < 0.0001 && zDeltAbs.y < 0.0001) discard_fragment();
+
+//    //float2 yDeltAbs = (abs(yDeltVec));
+//
+//    float xSign = xDeltAbs.x > xDeltAbs.y ? sign(xDeltVec.x) : sign(xDeltVec.y);
+//    float ySign = yDeltAbs.x > yDeltAbs.y ? sign(yDeltVec.x) : sign(yDeltVec.y);
+//    float zSign = zDeltAbs.x > zDeltAbs.y ? sign(zDeltVec.x) : sign(yDeltVec.y);
+//
+// //   if (yDeltAbs.x == 0 || yDeltAbs.y == 0) discard_fragment();
+//
+//    float xDelt = max(xDeltAbs.x, xDeltAbs.y);
+//    float yDelt = max(yDeltAbs.x, yDeltAbs.y);
+//    float zDelt = max(zDeltAbs.x, zDeltAbs.y);
+    
+//    //lol wut
+//    if (xDelt > yDelt)
+//    {
+//        if (xDelt > zDelt)
+//        {
+//            if (zDelt > yDelt)
+//            {
+//                textureCoordinate = objectPosition.xz;
+//            }
+//            else
+//            {
+//                textureCoordinate = objectPosition.xy;
+//            }
+//        }
+//        else
+//        {
+//            textureCoordinate = objectPosition.xz;
+//        }
+//    }
+//    else
+//    {
+//        if (yDelt > zDelt)
+//        {
+//            if (zDelt > xDelt)
+//            {
+//                textureCoordinate = objectPosition.yz;
+//            }
+//            else
+//            {
+//                textureCoordinate = objectPosition.xy;
+//            }
+//        }
+//        else
+//        {
+//            textureCoordinate = objectPosition.yz;
+//
+//        }
+//    }
+//
+    
+    textureCoordinate += 0.5;
+    
     uint4 tex = DecalTex.sample(samp, textureCoordinate);
     return float4(tex.x / 255.0, tex.y / 255.0f, tex.z / 255.0f, 1.0);
 }
@@ -183,7 +258,9 @@ vertex FSQuadVertexOUT FSQuadVSMain(FSQuadVertexIN vIN [[stage_in]])
 fragment float4 VisualizeTextureFSMain(FSQuadVertexOUT fIN [[stage_in]],
                                        texture2d<float, access::sample> targetTexture [[texture(0)]])
 {
-    constexpr sampler samp;
+    constexpr sampler samp(coord::normalized,
+                           address::repeat,
+                           filter::linear);
     return targetTexture.sample(samp, fIN.texcoord);
 }
 
@@ -194,7 +271,9 @@ fragment float4 LightingPassFSMain(FSQuadVertexOUT fIN [[stage_in]],
                                    texture2d<float, access::sample> GNorm [[texture(1)]],
                                    depth2d<float, access::sample> GDepth [[texture(2)]])
 {
-    constexpr sampler samp;
+    constexpr sampler samp(coord::normalized,
+                           address::repeat,
+                           filter::linear);
     
     float3 lightDir = normalize(float3(0.2,0.5,-1.0));
     float4 albedo = GAlbedo.sample(samp, fIN.texcoord);

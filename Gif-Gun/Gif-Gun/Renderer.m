@@ -47,9 +47,9 @@ const int MeshTypeDragon = 2;
     LoadingThread* _loadingThread;
     MTKMeshBufferAllocator* bufferAlloc;
 
-    id<MTLTexture> _gAlbedo[IN_FLIGHT_FRAMES];
-    id<MTLTexture> _gNormal[IN_FLIGHT_FRAMES];
-    id<MTLTexture> _gDepth[IN_FLIGHT_FRAMES];
+    id<MTLTexture> _gAlbedo;
+    id<MTLTexture> _gNormal;
+    id<MTLTexture> _gDepth;
     id<MTLBuffer>  _globalUniforms[IN_FLIGHT_FRAMES];
     
     id<MTLBuffer> _fsQuadVertBuffer;
@@ -116,11 +116,12 @@ const int MeshTypeDragon = 2;
     depthBufferDesc.storageMode = MTLStorageModePrivate;
     depthBufferDesc.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
     
-    for (uint i = 0; i < IN_FLIGHT_FRAMES; ++i)
+    _gAlbedo =   [_device newTextureWithDescriptor:texDesc];
+    _gNormal =   [_device newTextureWithDescriptor:texDesc];
+    _gDepth  =   [_device newTextureWithDescriptor:depthBufferDesc];
+    
+    for (int i = 0; i < IN_FLIGHT_FRAMES; ++i)
     {
-        _gAlbedo[i] =   [_device newTextureWithDescriptor:texDesc];
-        _gNormal[i] =   [_device newTextureWithDescriptor:texDesc];
-        _gDepth[i] =    [_device newTextureWithDescriptor:depthBufferDesc];
         _globalUniforms[i] = [_device newBufferWithLength:sizeof(GlobalUniforms) options:MTLResourceStorageModeShared];
     }
     
@@ -342,10 +343,10 @@ const int MeshTypeDragon = 2;
     {
         {
             MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
-            renderPassDesc.colorAttachments[0].texture = _gAlbedo[_nextFrameIdx];
+            renderPassDesc.colorAttachments[0].texture = _gAlbedo;
             renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
-            renderPassDesc.colorAttachments[1].texture = _gNormal[_nextFrameIdx];
-            renderPassDesc.depthAttachment.texture = _gDepth[_nextFrameIdx];
+            renderPassDesc.colorAttachments[1].texture = _gNormal;
+            renderPassDesc.depthAttachment.texture = _gDepth;
             renderPassDesc.depthAttachment.loadAction = MTLLoadActionClear;
             renderPassDesc.depthAttachment.storeAction = MTLStoreActionStore;
             renderPassDesc.stencilAttachment.texture = nil;
@@ -407,7 +408,7 @@ const int MeshTypeDragon = 2;
         //draw decals into color buffer - needs new render pass to commit the depth buffer store
         {
             MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
-            renderPassDesc.colorAttachments[0].texture = _gAlbedo[_nextFrameIdx];
+            renderPassDesc.colorAttachments[0].texture = _gAlbedo;
             renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
             renderPassDesc.colorAttachments[0].loadAction = MTLLoadActionLoad;
             renderPassDesc.colorAttachments[0].storeAction = MTLStoreActionStore;
@@ -440,8 +441,9 @@ const int MeshTypeDragon = 2;
                 [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
                 [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
 
-                [commandEncoder setFragmentTexture:_gDepth[_nextFrameIdx] atIndex:0];
-                [commandEncoder setFragmentTexture:_decalTexture atIndex:1];
+                [commandEncoder setFragmentTexture:_gDepth atIndex:0];
+                [commandEncoder setFragmentTexture:_gNormal atIndex:1];
+                [commandEncoder setFragmentTexture:_decalTexture atIndex:2];
 
                 for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
                 {
@@ -463,9 +465,9 @@ const int MeshTypeDragon = 2;
                 [commandEncoder pushDebugGroup:@"LightingPass"];
                 
                 [commandEncoder setRenderPipelineState:_lightingPassPipeline];
-                [commandEncoder setFragmentTexture:_gAlbedo[_nextFrameIdx] atIndex:0];
-                [commandEncoder setFragmentTexture:_gNormal[_nextFrameIdx] atIndex:1];
-                [commandEncoder setFragmentTexture:_gDepth[_nextFrameIdx] atIndex:2];
+                [commandEncoder setFragmentTexture:_gAlbedo atIndex:0];
+                [commandEncoder setFragmentTexture:_gNormal atIndex:1];
+                [commandEncoder setFragmentTexture:_gDepth atIndex:2];
 
                 [commandEncoder setVertexBuffer:_fsQuadVertBuffer offset:0 atIndex:0];
                 [commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
@@ -488,7 +490,7 @@ const int MeshTypeDragon = 2;
             [commandEncoder pushDebugGroup:@"VisualizeTexture"];
             
             [commandEncoder setRenderPipelineState:_visTexturePipeline];
-            [commandEncoder setFragmentTexture:_gNormal[_nextFrameIdx] atIndex:0];
+            [commandEncoder setFragmentTexture:_gNormal atIndex:0];
             
             [commandEncoder setVertexBuffer:_fsQuadVertBuffer offset:0 atIndex:0];
             [commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];

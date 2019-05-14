@@ -94,7 +94,7 @@
     _scn->cubeColors[4] = simd_make_float3(1.0,1.0,1.0);
     _scn->cubeColors[5] = simd_make_float3(1.0,0.75,0.75);
 
-    _scn->decalPos = simd_make_float3(5, -2.5, 0);
+    _scn->decalPos = simd_make_float3(10, -2.5, -10.5 * 0);
     _scn->decalScale = simd_make_float3(3, 3, 3);
 }
 
