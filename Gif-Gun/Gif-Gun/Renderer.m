@@ -384,7 +384,7 @@ const int MeshTypeDragon = 2;
             MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
             renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
             renderPassDesc.depthAttachment.loadAction = MTLLoadActionLoad;
-            renderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
+            renderPassDesc.depthAttachment.storeAction = MTLStoreActionStore;
             if (renderPassDesc != nil)
             {
                 id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
@@ -408,7 +408,7 @@ const int MeshTypeDragon = 2;
         MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
         renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.0);
         renderPassDesc.depthAttachment.loadAction = MTLLoadActionLoad;
-        renderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
+        renderPassDesc.depthAttachment.storeAction = MTLStoreActionStore;
         
         if (renderPassDesc != nil)
         {
@@ -431,22 +431,20 @@ const int MeshTypeDragon = 2;
         renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
         renderPassDesc.colorAttachments[0].loadAction = MTLLoadActionLoad;
         renderPassDesc.colorAttachments[0].storeAction = MTLStoreActionStore;
+        renderPassDesc.depthAttachment.texture = _gDepth;
         renderPassDesc.depthAttachment.loadAction = MTLLoadActionLoad;
         renderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
+        renderPassDesc.stencilAttachment.texture = nil;
+        renderPassDesc.stencilAttachment.loadAction = MTLLoadActionDontCare;
+        renderPassDesc.stencilAttachment.storeAction = MTLLoadActionDontCare;
+
         id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
         commandEncoder.label = @"DebugDrawing";
         
-        objectUniforms.modelMatrix = matrix_identity_float4x4;
-        objectUniforms.inv_modelMatrix = matrix_invert(objectUniforms.modelMatrix);
-        objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(objectUniforms.modelMatrix));
-        objectUniforms.modelViewMatrix = matrix_multiply(globalUniforms.viewMatrix, objectUniforms.modelMatrix);
-
         [commandEncoder setVertexBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
         [commandEncoder setFragmentBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
-        [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
-        [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
 
-        [[DebugDrawManager sharedInstance] draw:_device andEncoder:commandEncoder];
+        [[DebugDrawManager sharedInstance] drawScene:scn withDevice:_device andEncoder:commandEncoder];
         [commandEncoder endEncoding];
 
     }

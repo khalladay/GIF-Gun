@@ -18,6 +18,14 @@
         max = inMax;
         size = inMax - inMin;
         center = inMin + (size * 0.5);
+        
+        model = (simd_float4x4)
+        {{
+            {size.x, 0, 0, 0},
+            {0, size.y, 0, 0},
+            {0, 0, size.z, 0},
+            {center.x, center.y, center.z, 1.0}
+        }};
     }
     return self;
 }
@@ -30,6 +38,14 @@
         size = inSize;
         min = inCenter - size*0.5;
         max = inCenter + size*0.5;
+        
+        model = (simd_float4x4)
+        {{
+            {size.x, 0, 0, 0},
+            {0, size.y, 0, 0},
+            {0, 0, size.z, 0},
+            {center.x, center.y, center.z, 1.0}
+        }};
     }
     return self;
 }

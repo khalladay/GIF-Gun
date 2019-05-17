@@ -9,6 +9,8 @@
 #import "DebugDrawManager.h"
 #import "metal_utils.h"
 #import <MetalKit/MetalKit.h>
+#import "shader_structs.h"
+#import "AAPLMathUtilities.h"
 
 @interface DebugDrawManager()
 {
@@ -53,9 +55,9 @@
 -(void)buildDebugPipelines
 {
     //hard code pixel formats to match view (hack)
-    _debugLinePipeline = MTLPipelineStateMake(_device, @"DebugLines", @"DebugMeshVSMain", @"DebugMeshFSMain", 1, @[@(MTLPixelFormatBGRA8Unorm_sRGB)], MTLPixelFormatDepth32Float_Stencil8, MTLPixelFormatDepth32Float_Stencil8,_boxVertexDescriptor);
+    _debugLinePipeline = MTLPipelineStateMake(_device, @"DebugLines", @"DebugMeshVSMain", @"DebugMeshFSMain", 1, @[@(MTLPixelFormatBGRA8Unorm_sRGB)], MTLPixelFormatDepth32Float, MTLPixelFormatInvalid,_boxVertexDescriptor);
     
-    _debugDepthState = MTLDepthStateMake(_device, MTLCompareFunctionAlways, NO);
+    _debugDepthState = MTLDepthStateMake(_device, MTLCompareFunctionLessEqual, NO);
 }
 
 -(void)buildBoxMesh
@@ -88,9 +90,9 @@
     boxVD.layouts[0] = [[MDLVertexBufferLayout alloc] initWithStride:sizeof(float) * 3];
 
     _boxVertexDescriptor = MTKMetalVertexDescriptorFromModelIO(boxVD);
-    
 }
--(void)draw:(id<MTLDevice>)device andEncoder:(id<MTLRenderCommandEncoder>)commandEncoder
+
+-(void)drawScene:(Scene*)scn withDevice:(id<MTLDevice>)device andEncoder:(id<MTLRenderCommandEncoder>)commandEncoder
 {
     if (!_debugLinePipeline)
     {
@@ -99,6 +101,23 @@
         [self buildDebugPipelines];
     }
     
+    
+    matrix_float4x4 modelMatrix = (matrix_float4x4){ {
+        {scn->decalScale.x, 0, 0, 0},
+        {0, scn->decalScale.y, 0, 0},
+        {0, 0, scn->decalScale.z, 0},
+        {scn->decalPos.x, scn->decalPos.y, scn->decalPos.z, 1.0f}
+    }};
+
+    ObjectUniforms objectUniforms;
+    objectUniforms.modelMatrix = modelMatrix;
+    objectUniforms.inv_modelMatrix = matrix_invert(objectUniforms.modelMatrix);
+    objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(objectUniforms.modelMatrix));
+    objectUniforms.modelViewMatrix = matrix_multiply(matrix_invert(scn->playerTransform), objectUniforms.modelMatrix);
+    
+    [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+    [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+
     [commandEncoder pushDebugGroup:@"DebugBoxColliders"];
     [commandEncoder setRenderPipelineState:_debugLinePipeline];
     [commandEncoder setVertexBuffer:_boxVertexBuffer offset:0 atIndex:0];

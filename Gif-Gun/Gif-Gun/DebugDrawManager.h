@@ -10,6 +10,7 @@
 #import "Ray.h"
 #import "BoxCollider.h"
 #import <Metal/Metal.h>
+#import "Renderer.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -22,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 -(void)unregisterRay:(Ray*)r;
 -(void)unregisterBox:(BoxCollider*)b;
 
--(void)draw:(id<MTLDevice>)device andEncoder:(id<MTLRenderCommandEncoder>)commandEncoder;
+-(void)drawScene:(Scene*)scn withDevice:(id<MTLDevice>)device andEncoder:(id<MTLRenderCommandEncoder>)commandEncoder;
 
 @end
 

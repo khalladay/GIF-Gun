@@ -20,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
     simd_float3 max;
     simd_float3 size;
     simd_float3 center;
+    
+    simd_float4x4 model;
 }
 
 -(nonnull instancetype)initWithMin:(simd_float3)min andMax:(simd_float3)max;
