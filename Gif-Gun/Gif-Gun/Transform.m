@@ -49,6 +49,35 @@
     [self updateMatrix];
 }
 
+-(void)lookAt:(simd_float3)target
+{
+    //construct a rotation matrix to get to this point (look matrix without translation)
+    //convert that to a quaterion
+    //set rotation
+    simd_float3 fwd = simd_normalize(position - target);
+    simd_float3 world_up = simd_make_float3(0,1,0);
+    simd_float3 our_right = simd_normalize(simd_cross(world_up, fwd));
+    simd_float3 cam_up = simd_normalize(simd_cross(fwd, our_right));
+  /*
+    matrix_float3x3 basis = (matrix_float3x3)
+    {{
+        {our_right.x, our_right.y, our_right.z},
+        {cam_up.x, cam_up.y, cam_up.z},
+        {fwd.x, fwd.y, fwd.z}
+    }};
+    */
+        matrix_float3x3 basis = (matrix_float3x3)
+     {{
+     {our_right.x, cam_up.x, fwd.x},
+     {our_right.y, cam_up.y, fwd.y},
+     {our_right.z, cam_up.z, fwd.z}
+     }};
+
+    rotation = quaternion_from_matrix3x3(basis);
+    
+    [self updateMatrix];
+}
+
 -(void)translate:(simd_float3)vector
 {
     position += vector;

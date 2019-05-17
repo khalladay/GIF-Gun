@@ -11,6 +11,9 @@
 #import "LoadingThread.h"
 #import "AAPLMathUtilities.h"
 #import "shader_structs.h"
+#import "DebugDrawManager.h"
+#import "metal_utils.h"
+
 const int IN_FLIGHT_FRAMES = 3;
 
 const int MeshTypeCube = 1;
@@ -164,94 +167,17 @@ const int MeshTypeDragon = 2;
 
 -(void)buildPipelines
 {
-    id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
+    _staticGeoPipeline = MTLPipelineStateMake(_device, @"StaticGeo", @"GBufferFillVSMain", @"GBufferFillFSMain", _view.sampleCount, @[@(MTLPixelFormatRGBA32Float),@(MTLPixelFormatRGBA32Float)], MTLPixelFormatDepth32Float, MTLPixelFormatInvalid, _vertexDescriptor);
     
-    //meshes
-    {
-        MTLRenderPipelineDescriptor* pipelineDesc = [MTLRenderPipelineDescriptor new];
-        pipelineDesc.label = @"StaticGeo";
-        pipelineDesc.vertexFunction = [defaultLibrary newFunctionWithName:@"GBufferFillVSMain"];
-        pipelineDesc.fragmentFunction = [defaultLibrary newFunctionWithName:@"GBufferFillFSMain"];
-        pipelineDesc.sampleCount = _view.sampleCount;
-        pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA32Float;
-        pipelineDesc.colorAttachments[1].pixelFormat = MTLPixelFormatRGBA32Float;
-        pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
-        pipelineDesc.vertexDescriptor = _vertexDescriptor;
-                
-        NSError *error = Nil;
-        _staticGeoPipeline = [_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
-        if (!_staticGeoPipeline)
-        {
-            NSLog(@"Failed to created pipeline state, error %@", error);
-        }
-    }
+    _decalPipeline = MTLPipelineStateMake(_device, @"Decals", @"DecalVSMain", @"DecalFSMain", _view.sampleCount, @[@(MTLPixelFormatRGBA32Float)], MTLPixelFormatInvalid, MTLPixelFormatInvalid, _vertexDescriptor);
     
-    {
-        MTLRenderPipelineDescriptor* pipelineDesc = [MTLRenderPipelineDescriptor new];
-        pipelineDesc.label = @"Decals";
-        pipelineDesc.vertexFunction = [defaultLibrary newFunctionWithName:@"DecalVSMain"];
-        pipelineDesc.fragmentFunction = [defaultLibrary newFunctionWithName:@"DecalFSMain"];
-        pipelineDesc.sampleCount = _view.sampleCount;
-        pipelineDesc.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA32Float;
-        pipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
-        pipelineDesc.vertexDescriptor = _vertexDescriptor;
-        
-        NSError *error = Nil;
-        _decalPipeline = [_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
-        if (!_decalPipeline)
-        {
-            NSLog(@"Failed to created pipeline state, error %@", error);
-        }
-    }
+    _visTexturePipeline = MTLPipelineStateMake(_device, @"VisTexture", @"FSQuadVSMain", @"VisualizeTextureFSMain", _view.sampleCount, @[@(_view.colorPixelFormat)], _view.depthStencilPixelFormat, _view.depthStencilPixelFormat,_fsQuadVertexDescriptor);
     
-    {
-        MTLRenderPipelineDescriptor* pipelineDesc = [MTLRenderPipelineDescriptor new];
-        pipelineDesc.label = @"VisualizeTexture";
-        pipelineDesc.vertexFunction = [defaultLibrary newFunctionWithName:@"FSQuadVSMain"];
-        pipelineDesc.fragmentFunction = [defaultLibrary newFunctionWithName:@"VisualizeTextureFSMain"];
-        pipelineDesc.sampleCount = _view.sampleCount;
-        pipelineDesc.colorAttachments[0].pixelFormat = _view.colorPixelFormat;
-        pipelineDesc.depthAttachmentPixelFormat = _view.depthStencilPixelFormat;
-        pipelineDesc.stencilAttachmentPixelFormat = _view.depthStencilPixelFormat;
-        pipelineDesc.vertexDescriptor = _fsQuadVertexDescriptor;
-        
-        NSError *error = Nil;
-        _visTexturePipeline = [_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
-        if (!_visTexturePipeline)
-        {
-            NSLog(@"Failed to created pipeline state, error %@", error);
-        }
-    }
-    
-    //lighting pass
-    {
-        MTLRenderPipelineDescriptor* pipelineDesc = [MTLRenderPipelineDescriptor new];
-        pipelineDesc.label = @"StaticGeo";
-        pipelineDesc.vertexFunction = [defaultLibrary newFunctionWithName:@"FSQuadVSMain"];
-        pipelineDesc.fragmentFunction = [defaultLibrary newFunctionWithName:@"LightingPassFSMain"];
-        pipelineDesc.sampleCount = _view.sampleCount;
-        pipelineDesc.colorAttachments[0].pixelFormat = _view.colorPixelFormat;
-        pipelineDesc.depthAttachmentPixelFormat = _view.depthStencilPixelFormat;
-        pipelineDesc.stencilAttachmentPixelFormat = _view.depthStencilPixelFormat;
-        pipelineDesc.vertexDescriptor = _fsQuadVertexDescriptor;
-        
-        NSError *error = Nil;
-        _lightingPassPipeline = [_device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
-        if (!_lightingPassPipeline)
-        {
-            NSLog(@"Failed to created pipeline state, error %@", error);
-        }
-    }
-    
-    MTLDepthStencilDescriptor *depthStateDesc = [[MTLDepthStencilDescriptor alloc] init];
-    depthStateDesc.depthCompareFunction = MTLCompareFunctionLess;
-    depthStateDesc.depthWriteEnabled = YES;
-    _depthState = [_device newDepthStencilStateWithDescriptor:depthStateDesc];
-    
-    depthStateDesc.depthWriteEnabled = NO;
-    depthStateDesc.depthCompareFunction = MTLCompareFunctionAlways;
-    _decalDepthState =[_device newDepthStencilStateWithDescriptor:depthStateDesc];
+    _lightingPassPipeline = MTLPipelineStateMake(_device, @"StaticGeo", @"FSQuadVSMain", @"LightingPassFSMain", _view.sampleCount, @[@(_view.colorPixelFormat)], _view.depthStencilPixelFormat, _view.depthStencilPixelFormat,_fsQuadVertexDescriptor);
 
+    
+    _depthState = MTLDepthStateMake(_device, MTLCompareFunctionLess, YES);
+    _decalDepthState = MTLDepthStateMake(_device, MTLCompareFunctionAlways, NO);
 }
 
 -(void)loadMeshes
@@ -353,11 +279,12 @@ const int MeshTypeDragon = 2;
             renderPassDesc.stencilAttachment.loadAction = MTLLoadActionDontCare;
             renderPassDesc.stencilAttachment.storeAction = MTLLoadActionDontCare;
 
-            id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
-            commandEncoder.label = @"RenderEncoder";
 
             if (renderPassDesc != nil)
             {
+                id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
+                commandEncoder.label = @"RenderEncoder";
+
                 [commandEncoder pushDebugGroup:@"DrawStaticGeo"];
 
                 if (_loadedMeshes >= MeshTypeCube)
@@ -498,6 +425,33 @@ const int MeshTypeDragon = 2;
         }
 
     }
+    
+    {
+        MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
+        renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
+        renderPassDesc.colorAttachments[0].loadAction = MTLLoadActionLoad;
+        renderPassDesc.colorAttachments[0].storeAction = MTLStoreActionStore;
+        renderPassDesc.depthAttachment.loadAction = MTLLoadActionLoad;
+        renderPassDesc.depthAttachment.storeAction = MTLStoreActionDontCare;
+        id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
+        commandEncoder.label = @"DebugDrawing";
+        
+        objectUniforms.modelMatrix = matrix_identity_float4x4;
+        objectUniforms.inv_modelMatrix = matrix_invert(objectUniforms.modelMatrix);
+        objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(objectUniforms.modelMatrix));
+        objectUniforms.modelViewMatrix = matrix_multiply(globalUniforms.viewMatrix, objectUniforms.modelMatrix);
+
+        [commandEncoder setVertexBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
+        [commandEncoder setFragmentBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
+        [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+        [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+
+        [[DebugDrawManager sharedInstance] draw:_device andEncoder:commandEncoder];
+        [commandEncoder endEncoding];
+
+    }
+    
+    
     [commandBuffer presentDrawable:_view.currentDrawable];
 
     __block dispatch_semaphore_t block_sema = _inFlightSemaphore;

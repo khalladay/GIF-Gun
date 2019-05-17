@@ -60,6 +60,33 @@ float linearizeDepth(float d, float nearClip, float farClip)
     return linearDepth;
 }
 
+#pragma mark - Debug Drawing
+
+struct DebugVertexIN
+{
+    float3 position [[attribute(0)]];
+};
+
+struct DebugVertexOUT
+{
+    float4 pos [[position]];
+};
+
+vertex DebugVertexOUT DebugMeshVSMain(DebugVertexIN vIN [[stage_in]],
+                                  constant GlobalUniforms& globals [[buffer(GLOBAL_UNIFORM_INDEX)]],
+                                  constant ObjectUniforms& primitive [[buffer(OBJECT_UNIFORM_INDEX)]])
+{
+    DebugVertexOUT vOUT;
+    vOUT.pos = globals.projectionMatrix * primitive.modelViewMatrix * float4(vIN.position, 1.0);
+    return vOUT;
+}
+
+fragment float4 DebugMeshFSMain(DebugVertexOUT fIN [[stage_in]],
+                                constant float4& color [[buffer(0)]])
+{
+    return color;
+}
+
 #pragma mark - GBufferFill
 
 struct GBufferVertexOUT
@@ -136,9 +163,7 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
     
     float4 depth = GDepth.sample(samp, texCoord);
     float3 norm = normalize( (GNormal.sample(samp, texCoord).xyz - 0.5) * 2.0);
-    
-    float3 vsNorm = normalize(primitive.inv_modelMatrix * float4(norm, 0.0)).xyz;
-    
+        
     float linearDepth = linearizeDepth(depth.r, globals.nearClip, globals.farClip);
     
     //creates a ray with a known z position (far clip), so that rather than normalizing

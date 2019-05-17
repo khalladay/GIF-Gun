@@ -12,6 +12,8 @@
 		0781A6BA2288805B00F2B98A /* BoxCollider.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6B92288805B00F2B98A /* BoxCollider.m */; };
 		0781A6BD228882CA00F2B98A /* Ray.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6BC228882CA00F2B98A /* Ray.m */; };
 		0781A6BF228AFF8600F2B98A /* CollisionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6BE228AFF8600F2B98A /* CollisionTests.m */; };
+		0781A6C3228C3B5500F2B98A /* DebugDrawManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6C2228C3B5500F2B98A /* DebugDrawManager.m */; };
+		0781A6C6228C523300F2B98A /* metal_utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6C5228C523300F2B98A /* metal_utils.m */; };
 		07FDC9422278826500E620ED /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9412278826500E620ED /* AppDelegate.m */; };
 		07FDC9442278826700E620ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9432278826700E620ED /* Assets.xcassets */; };
 		07FDC9472278826800E620ED /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9452278826800E620ED /* MainMenu.xib */; };
@@ -42,6 +44,10 @@
 		0781A6BC228882CA00F2B98A /* Ray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Ray.m; sourceTree = "<group>"; };
 		0781A6BE228AFF8600F2B98A /* CollisionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CollisionTests.m; sourceTree = "<group>"; };
 		0781A6C0228AFF9100F2B98A /* CollisionTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CollisionTests.h; sourceTree = "<group>"; };
+		0781A6C1228C3B5500F2B98A /* DebugDrawManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DebugDrawManager.h; sourceTree = "<group>"; };
+		0781A6C2228C3B5500F2B98A /* DebugDrawManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DebugDrawManager.m; sourceTree = "<group>"; };
+		0781A6C4228C519800F2B98A /* metal_utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = metal_utils.h; sourceTree = "<group>"; };
+		0781A6C5228C523300F2B98A /* metal_utils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = metal_utils.m; sourceTree = "<group>"; };
 		07FDC93D2278826500E620ED /* Gif-Gun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Gif-Gun.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		07FDC9402278826500E620ED /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		07FDC9412278826500E620ED /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -133,6 +139,8 @@
 				0781A6BE228AFF8600F2B98A /* CollisionTests.m */,
 				0781A6BB228882CA00F2B98A /* Ray.h */,
 				0781A6BC228882CA00F2B98A /* Ray.m */,
+				0781A6C1228C3B5500F2B98A /* DebugDrawManager.h */,
+				0781A6C2228C3B5500F2B98A /* DebugDrawManager.m */,
 				0781A6B82288805B00F2B98A /* BoxCollider.h */,
 				0781A6B92288805B00F2B98A /* BoxCollider.m */,
 				07FDC978227E1F7D00E620ED /* AAPLMathUtilities.h */,
@@ -140,6 +148,8 @@
 				0781A6B02285B20300F2B98A /* shader_structs.h */,
 				0781A6B52287524400F2B98A /* Transform.h */,
 				0781A6B62287524400F2B98A /* Transform.m */,
+				0781A6C4228C519800F2B98A /* metal_utils.h */,
+				0781A6C5228C523300F2B98A /* metal_utils.m */,
 			);
 			path = "Gif-Gun";
 			sourceTree = "<group>";
@@ -227,6 +237,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				07FDC94A2278826800E620ED /* main.m in Sources */,
+				0781A6C6228C523300F2B98A /* metal_utils.m in Sources */,
 				0781A6B72287524400F2B98A /* Transform.m in Sources */,
 				07FDC96B227889A100E620ED /* GifGunGame.mm in Sources */,
 				0781A6BA2288805B00F2B98A /* BoxCollider.m in Sources */,
@@ -238,6 +249,7 @@
 				07FDC95F2278868A00E620ED /* gif_read.cpp in Sources */,
 				07FDC97A227E1F7D00E620ED /* AAPLMathUtilities.m in Sources */,
 				07FDC9422278826500E620ED /* AppDelegate.m in Sources */,
+				0781A6C3228C3B5500F2B98A /* DebugDrawManager.m in Sources */,
 				07FDC9622278873200E620ED /* ViewController.m in Sources */,
 				07FDC9732279331B00E620ED /* shaders.metal in Sources */,
 			);

@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 -(void)rotateOnAxis:(simd_float3)axis angle:(float)degrees;
 -(void)setScale:(simd_float3)newScale;
 -(void)setPosition:(simd_float3)newPosition;
+-(void)lookAt:(simd_float3)target;
 @end
 
 NS_ASSUME_NONNULL_END

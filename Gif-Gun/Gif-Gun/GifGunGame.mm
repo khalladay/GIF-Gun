@@ -11,6 +11,9 @@
 #import "AAPLMathUtilities.h"
 #include "gif_read.h"
 #include "Transform.h"
+#import "BoxCollider.h"
+#import "Ray.h"
+#import "DebugDrawManager.h"
 #define DEG2RAD 0.01745329251
 
 @interface GifGunGame()
@@ -28,6 +31,7 @@
     bool _right;
     
     Transform* _playerTransform;
+    NSMutableArray* _boxes;
 }
 
 -(void)constructScene;
@@ -44,8 +48,9 @@
         NSAssert(renderer, @"initializing SphereGame with nil renderer");
         _renderer = renderer;
         _playerTransform = [Transform new];
-        [_playerTransform setPosition:simd_make_float3(-4, 1.5, 0)];
+        [_playerTransform setPosition:simd_make_float3(0, 0, 0)];
         [_playerTransform rotateOnAxis:simd_make_float3(0, 1, 0) angle:45.0];
+        _boxes = [NSMutableArray new];
         
         NSURL* imgURL = [[NSBundle mainBundle] URLForResource:@"snoopy" withExtension:@"gif"];
         NSString* str = [imgURL path];
@@ -96,6 +101,13 @@
 
     _scn->decalPos = simd_make_float3(10, -2.5, -10.5 * 0);
     _scn->decalScale = simd_make_float3(3, 3, 3);
+    
+    for (int i = 0; i < 6; ++i)
+    {
+        [_boxes addObject:[[BoxCollider alloc] initWithSize:_scn->cubeScales[i] centeredAt:_scn->cubePositions[i]]];
+    }
+    [[DebugDrawManager sharedInstance] registerBox:[[BoxCollider alloc] initWithSize:_scn->decalScale centeredAt:_scn->decalPos]];
+    
 }
 
 -(void)tick:(double_t)deltaTime
