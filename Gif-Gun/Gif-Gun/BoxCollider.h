@@ -26,8 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 -(nonnull instancetype)initWithMin:(simd_float3)min andMax:(simd_float3)max;
 -(nonnull instancetype)initWithSize:(simd_float3)size centeredAt:(simd_float3)center;
--(BOOL)doesIntersectBox:(BoxCollider*)box;
--(BOOL)isPointInside:(simd_float3)point;
+-(void)recenterAtPoint:(simd_float3)center;
+-(BOOL)intersectsBox:(BoxCollider*)box;
+-(BOOL)containsPoint:(simd_float3)point;
 @end
 
 NS_ASSUME_NONNULL_END

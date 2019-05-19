@@ -10,8 +10,9 @@
 #define CollisionTests_h
 #import "BoxCollider.h"
 #import "Ray.h"
+#import <SIMD/simd.h>
 
--(CGPoint)testCollisionRay2Box:(Ray*)ray box:(BoxCollider*)box;
+simd_float3 ray2aabb(Ray* r, BoxCollider* b);
 
 
 #endif /* CollisionTests_h */

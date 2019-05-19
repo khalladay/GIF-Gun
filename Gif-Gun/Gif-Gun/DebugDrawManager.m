@@ -18,13 +18,17 @@
     id<MTLDepthStencilState> _debugDepthState;
     
     id<MTLBuffer> _boxVertexBuffer;
-    MTLVertexDescriptor* _boxVertexDescriptor;
+    id<MTLBuffer> _rayVertexBuffer;
+    
+    MTLVertexDescriptor* _debugLineVertDesc;
     NSMutableArray<BoxCollider*>* _boxes;
+    NSMutableArray<Ray*>* _rays;
     id<MTLDevice> _device;
 }
 
 -(void)buildDebugPipelines;
 -(void)buildBoxMesh;
+-(void)buildVertDesc;
 
 @end
 
@@ -35,6 +39,7 @@
     if (self = [super init])
     {
         _boxes = [NSMutableArray new];
+        _rays = [NSMutableArray new];
 
     }
     return self;
@@ -55,9 +60,30 @@
 -(void)buildDebugPipelines
 {
     //hard code pixel formats to match view (hack)
-    _debugLinePipeline = MTLPipelineStateMake(_device, @"DebugLines", @"DebugMeshVSMain", @"DebugMeshFSMain", 1, @[@(MTLPixelFormatBGRA8Unorm_sRGB)], MTLPixelFormatDepth32Float, MTLPixelFormatInvalid,_boxVertexDescriptor);
+    _debugLinePipeline = MTLPipelineStateMake(_device, @"DebugLines", @"DebugMeshVSMain", @"DebugMeshFSMain", 1, @[@(MTLPixelFormatBGRA8Unorm_sRGB)], MTLPixelFormatDepth32Float, MTLPixelFormatInvalid,_debugLineVertDesc);
     
-    _debugDepthState = MTLDepthStateMake(_device, MTLCompareFunctionLessEqual, NO);
+    _debugDepthState = MTLDepthStateMake(_device, MTLCompareFunctionAlways, NO);
+}
+
+-(void)buildRayMesh
+{
+    float verts[6] =
+    {
+        0,0,0, 0,0,1
+    };
+    
+    _rayVertexBuffer = [_device newBufferWithBytes:verts length:sizeof(float)*6 options:MTLResourceStorageModeShared];
+
+}
+
+-(void)buildVertDesc
+{
+    MDLVertexDescriptor* boxVD = [MDLVertexDescriptor new];
+    boxVD.attributes[0] = [[MDLVertexAttribute alloc] initWithName:MDLVertexAttributePosition format:MDLVertexFormatFloat3 offset:0 bufferIndex:0];
+    boxVD.layouts[0] = [[MDLVertexBufferLayout alloc] initWithStride:sizeof(float) * 3];
+    
+    _debugLineVertDesc = MTKMetalVertexDescriptorFromModelIO(boxVD);
+
 }
 
 -(void)buildBoxMesh
@@ -84,12 +110,6 @@
     };
     
     _boxVertexBuffer = [_device newBufferWithBytes:verts length:sizeof(float)*12*6 options:MTLResourceStorageModeShared];
-    
-    MDLVertexDescriptor* boxVD = [MDLVertexDescriptor new];
-    boxVD.attributes[0] = [[MDLVertexAttribute alloc] initWithName:MDLVertexAttributePosition format:MDLVertexFormatFloat3 offset:0 bufferIndex:0];
-    boxVD.layouts[0] = [[MDLVertexBufferLayout alloc] initWithStride:sizeof(float) * 3];
-
-    _boxVertexDescriptor = MTKMetalVertexDescriptorFromModelIO(boxVD);
 }
 
 -(void)drawScene:(Scene*)scn withDevice:(id<MTLDevice>)device andEncoder:(id<MTLRenderCommandEncoder>)commandEncoder
@@ -97,7 +117,9 @@
     if (!_debugLinePipeline)
     {
         _device = device;
+        [self buildVertDesc];
         [self buildBoxMesh];
+        [self buildRayMesh];
         [self buildDebugPipelines];
     }
     
@@ -124,6 +146,34 @@
     simd_float4 col = simd_make_float4(1,1,1, 1);
     [commandEncoder setFragmentBytes:&col length:sizeof(simd_float4) atIndex:0];
     [commandEncoder drawPrimitives:MTLPrimitiveTypeLine vertexStart:0 vertexCount:24];
+    
+    [commandEncoder pushDebugGroup:@"DebugRays"];
+
+    for (int i = 0; i < [_rays count]; i++)
+    {
+
+        Ray* r = _rays[i];
+        matrix_float4x4 modelMatrix = (matrix_float4x4){ {
+            {r->len, 0, 0, 0},
+            {0, r->len, 0, 0},
+            {0, 0, r->len, 0},
+            {r->origin.x, r->origin.y, r->origin.z, 1.0f}
+        }};
+
+        objectUniforms.modelMatrix = matrix_multiply( modelMatrix,r->rotationMatrix);
+        objectUniforms.inv_modelMatrix = matrix_invert(objectUniforms.modelMatrix);
+        objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(objectUniforms.modelMatrix));
+        objectUniforms.modelViewMatrix = matrix_multiply(matrix_invert(scn->playerTransform), objectUniforms.modelMatrix);
+        
+        
+        [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+        [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+
+        [commandEncoder setVertexBuffer:_rayVertexBuffer offset:0 atIndex:0];
+        simd_float4 col = simd_make_float4(1,1,1, 1);
+        [commandEncoder setFragmentBytes:&col length:sizeof(simd_float4) atIndex:0];
+        [commandEncoder drawPrimitives:MTLPrimitiveTypeLine vertexStart:0 vertexCount:2];
+    }
 
 }
 
@@ -139,7 +189,7 @@
 
 -(void)registerRay:(Ray *)r
 {
-    
+    [_rays addObject:r];
 }
 
 -(void)unregisterRay:(Ray *)r

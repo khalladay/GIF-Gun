@@ -14,6 +14,8 @@
 #import "BoxCollider.h"
 #import "Ray.h"
 #import "DebugDrawManager.h"
+#import "CollisionTests.h"
+
 #define DEG2RAD 0.01745329251
 
 @interface GifGunGame()
@@ -31,6 +33,9 @@
     bool _right;
     
     Transform* _playerTransform;
+    BoxCollider* _playerBox;
+    BoxCollider* _candidateBox;
+    
     NSMutableArray* _boxes;
 }
 
@@ -51,6 +56,8 @@
         [_playerTransform setPosition:simd_make_float3(0, 0, 0)];
         [_playerTransform rotateOnAxis:simd_make_float3(0, 1, 0) angle:45.0];
         _boxes = [NSMutableArray new];
+        _playerBox = [[BoxCollider alloc] initWithMin:simd_make_float3(-1,-1, -1) andMax:simd_make_float3(1, 1, 1)];
+        _candidateBox = [[BoxCollider alloc] initWithMin:simd_make_float3(-1,-1, -1) andMax:simd_make_float3(1, 1, 1)];
         
         NSURL* imgURL = [[NSBundle mainBundle] URLForResource:@"snoopy" withExtension:@"gif"];
         NSString* str = [imgURL path];
@@ -120,9 +127,26 @@
     if (_left) vel -= _playerTransform->right;
     if (_right) vel += _playerTransform->right;
     if (simd_length(vel) > 0) vel = simd_normalize(vel) * speed;
-    [_playerTransform translate:vel];
+    
+    [_candidateBox recenterAtPoint:_playerTransform->position + vel];
+    
+    bool hitsWall = false;
+    for (int i = 0; i < 6; ++i)
+    {
+        if ([_boxes[i] intersectsBox:_candidateBox])
+        {
+            hitsWall = true;
+        }
+    }
+    
+    if (!hitsWall)
+    {
+        [_playerTransform translate:vel];        
+    }
+    
     _scn->playerTransform = _playerTransform->matrix;
 
+    
     Scene* nextScene = [[Scene alloc] initWithScene:_scn];
     _gif->tick(deltaTime);
     [_renderer updateDecalTexture:CGSizeMake(_gif->getWidth(), _gif->getHeight()) data:_gif->getCurrentFrame()];
@@ -159,7 +183,33 @@
 
 -(void)spray
 {
-    
+    Ray *r = [[Ray alloc] initWithOrigin:_playerTransform->position andDirection:_playerTransform->forward];
+    for (int i = 0; i < 6; ++i)
+    {
+        BoxCollider* b = _boxes[i];
+
+        //ray/box collision test
+        
+        const int NO_HIT = -1;
+        
+        float t[10];
+        t[1] = (b->min.x - r->origin.x)/r->direction.x;
+        t[2] = (b->max.x - r->origin.x)/r->direction.x;
+        t[3] = (b->min.y - r->origin.y)/r->direction.y;
+        t[4] = (b->max.y - r->origin.y)/r->direction.y;
+        t[5] = (b->min.z - r->origin.z)/r->direction.z;
+        t[6] = (b->max.z - r->origin.z)/r->direction.z;
+        t[7] = fmax(fmax(fmin(t[1], t[2]), fmin(t[3], t[4])), fmin(t[5], t[6]));
+        t[8] = fmin(fmin(fmax(t[1], t[2]), fmax(t[3], t[4])), fmax(t[5], t[6]));
+        t[9] = (t[8] < 0 || t[7] > t[8]) ? NO_HIT : t[7];
+        
+        if (t[9] != NO_HIT) //in this scene, a ray should always hit
+        {
+            r->len = t[9];
+            [[DebugDrawManager sharedInstance] registerRay:r];
+        }
+    }
+
 }
 
 @end

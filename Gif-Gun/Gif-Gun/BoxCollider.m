@@ -34,23 +34,28 @@
 {
     if (self = [super init])
     {
-        center = inCenter;
         size = inSize;
-        min = inCenter - size*0.5;
-        max = inCenter + size*0.5;
-        
-        model = (simd_float4x4)
-        {{
-            {size.x, 0, 0, 0},
-            {0, size.y, 0, 0},
-            {0, 0, size.z, 0},
-            {center.x, center.y, center.z, 1.0}
-        }};
+        [self recenterAtPoint:inCenter];
     }
     return self;
 }
 
--(BOOL)doesIntersectBox:(BoxCollider*)box
+-(void)recenterAtPoint:(simd_float3)inCenter
+{
+    center = inCenter;
+    min = inCenter - size*0.5;
+    max = inCenter + size*0.5;
+    model = (simd_float4x4)
+    {{
+        {size.x, 0, 0, 0},
+        {0, size.y, 0, 0},
+        {0, 0, size.z, 0},
+        {center.x, center.y, center.z, 1.0}
+    }};
+
+}
+
+-(BOOL)intersectsBox:(BoxCollider*)box
 {
     return (min.x <= box->max.x && max.x >= box->min.x) &&
     (min.y <= box->max.y && max.y >= box->min.y) &&
@@ -59,7 +64,7 @@
     return true;
 }
 
--(BOOL)isPointInside:(simd_float3)point
+-(BOOL)containsPoint:(simd_float3)point
 {
     return (point.x >= min.x && point.x <= max.x) &&
     (point.y >= min.y && point.y <= max.y) &&

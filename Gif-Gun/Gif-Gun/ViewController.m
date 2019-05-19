@@ -106,6 +106,7 @@
 
 - (void)mouseDown:(NSEvent *)event
 {
+    [_game spray];
 }
 
 - (void)mouseUp:(NSEvent *)event
