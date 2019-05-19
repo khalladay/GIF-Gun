@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
     simd_float3 cubePositions[6]; //room is built by Axis aligned cubes
     simd_float3 cubeScales[6];
     simd_float3 cubeColors[6];
+    
     simd_float3 decalPos;
     simd_float3 decalScale;
 }

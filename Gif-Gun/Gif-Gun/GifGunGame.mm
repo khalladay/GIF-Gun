@@ -141,7 +141,7 @@
     
     if (!hitsWall)
     {
-        [_playerTransform translate:vel];        
+        [_playerTransform translate:vel];
     }
     
     _scn->playerTransform = _playerTransform->matrix;
@@ -188,8 +188,7 @@
     {
         BoxCollider* b = _boxes[i];
 
-        //ray/box collision test
-        
+        //ray/box collision test https://tavianator.com/fast-branchless-raybounding-box-intersections/
         const int NO_HIT = -1;
         
         float t[10];
@@ -207,6 +206,7 @@
         {
             r->len = t[9];
             [[DebugDrawManager sharedInstance] registerRay:r];
+            _scn->decalPos = r->origin + r->direction*t[9];
         }
     }
 

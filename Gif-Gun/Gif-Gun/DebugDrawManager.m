@@ -62,7 +62,7 @@
     //hard code pixel formats to match view (hack)
     _debugLinePipeline = MTLPipelineStateMake(_device, @"DebugLines", @"DebugMeshVSMain", @"DebugMeshFSMain", 1, @[@(MTLPixelFormatBGRA8Unorm_sRGB)], MTLPixelFormatDepth32Float, MTLPixelFormatInvalid,_debugLineVertDesc);
     
-    _debugDepthState = MTLDepthStateMake(_device, MTLCompareFunctionAlways, NO);
+    _debugDepthState = MTLDepthStateMake(_device, MTLCompareFunctionLessEqual, NO);
 }
 
 -(void)buildRayMesh
