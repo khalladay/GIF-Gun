@@ -7,6 +7,7 @@
 //
 
 #import "Transform.h"
+#import "AAPLMathUtilities.h"
 #define DEG2RAD 0.01745329251
 
 @interface Transform()
@@ -28,6 +29,22 @@
         rotation = quaternion_identity();
     }
     return self;
+}
+
+-(void)setRotation:(quaternion_float)rot
+{
+    rotation = rot;
+    [self updateMatrix];
+}
+
+-(Transform*)copy
+{
+    Transform* t = [Transform new];
+    t->scale = scale;
+    t->rotation =rotation;
+    t->position = position;
+    [t updateMatrix];
+    return t;
 }
 
 -(void)updateMatrix
@@ -56,17 +73,17 @@
     //set rotation
     simd_float3 fwd = simd_normalize(position - target);
     simd_float3 world_up = simd_make_float3(0,1,0);
+  
+    float upDot = simd_dot(world_up, fwd);
+    if (upDot == 1.0 || upDot < -1 + 0.000001) //looking straight up or down
+    {
+        world_up = simd_make_float3(0,0,1);
+    }
+    
     simd_float3 our_right = simd_normalize(simd_cross(world_up, fwd));
     simd_float3 cam_up = simd_normalize(simd_cross(fwd, our_right));
-  /*
+
     matrix_float3x3 basis = (matrix_float3x3)
-    {{
-        {our_right.x, our_right.y, our_right.z},
-        {cam_up.x, cam_up.y, cam_up.z},
-        {fwd.x, fwd.y, fwd.z}
-    }};
-    */
-        matrix_float3x3 basis = (matrix_float3x3)
      {{
      {our_right.x, cam_up.x, fwd.x},
      {our_right.y, cam_up.y, fwd.y},
@@ -95,5 +112,36 @@
     scale = newScale;
     [self updateMatrix];
 }
+
+
+-(simd_float3) getEuler
+{
+    //alg from wikipedia
+    quaternion_float q = rotation;
+    
+    double sinr_cosp = +2.0 * (q.w * q.x + q.y * q.z);
+    double cosr_cosp = +1.0 - 2.0 * (q.x * q.x + q.y * q.y);
+    euler.z = atan2(sinr_cosp, cosr_cosp);
+    
+    // pitch (y-axis rotation)
+    double sinp = +2.0 * (q.w * q.y - q.z * q.x);
+    if (fabs(sinp) >= 1)
+        euler.x = copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+    else
+        euler.x = asin(sinp);
+    
+    // yaw (z-axis rotation)
+    double siny_cosp = +2.0 * (q.w * q.z + q.x * q.y);
+    double cosy_cosp = +1.0 - 2.0 * (q.y * q.y + q.z * q.z);
+    euler.y = atan2(siny_cosp, cosy_cosp);
+
+    return euler;
+}
+
+-(void)setRotationEuler:(simd_float3)euler
+{
+    [self setRotation:quaternion_from_euler(euler)];
+}
+
 
 @end

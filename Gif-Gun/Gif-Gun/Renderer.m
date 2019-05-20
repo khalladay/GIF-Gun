@@ -344,12 +344,7 @@ const int MeshTypeDragon = 2;
         
             if (renderPassDesc != nil)
             {
-                matrix_float4x4 modelMatrix = (matrix_float4x4){ {
-                    {scn->decalScale.x, 0, 0, 0},
-                    {0, scn->decalScale.y, 0, 0},
-                    {0, 0, scn->decalScale.z, 0},
-                    {scn->decalPos.x, scn->decalPos.y, scn->decalPos.z, 1.0f}
-                }};
+                matrix_float4x4 modelMatrix = scn->decalTransform;
                 
                 id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
                 [commandEncoder pushDebugGroup:@"DrawDecals"];
@@ -514,8 +509,7 @@ const int MeshTypeDragon = 2;
     
         
         playerTransform = matrix_multiply(matrix_identity_float4x4, scn->playerTransform);
-        decalScale = scn->decalScale;
-        decalPos = scn->decalPos;
+        decalTransform = scn->decalTransform;
     }
     return self;
 }

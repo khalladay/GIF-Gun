@@ -19,8 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
     simd_float3 cubeScales[6];
     simd_float3 cubeColors[6];
     
-    simd_float3 decalPos;
-    simd_float3 decalScale;
+    matrix_float4x4 decalTransform;
 }
 
 -(nonnull instancetype)initWithScene:(Scene*)scn;

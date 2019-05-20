@@ -36,6 +36,7 @@
     BoxCollider* _playerBox;
     BoxCollider* _candidateBox;
     
+    Transform* _decalTransform;
     NSMutableArray* _boxes;
 }
 
@@ -58,6 +59,11 @@
         _boxes = [NSMutableArray new];
         _playerBox = [[BoxCollider alloc] initWithMin:simd_make_float3(-1,-1, -1) andMax:simd_make_float3(1, 1, 1)];
         _candidateBox = [[BoxCollider alloc] initWithMin:simd_make_float3(-1,-1, -1) andMax:simd_make_float3(1, 1, 1)];
+        
+        _decalTransform = [Transform new];
+
+        [_decalTransform setPosition:simd_make_float3(10, -2.5, -10.5 * 0)];
+        [_decalTransform setScale:simd_make_float3(3, 3, 3)];
         
         NSURL* imgURL = [[NSBundle mainBundle] URLForResource:@"snoopy" withExtension:@"gif"];
         NSString* str = [imgURL path];
@@ -105,15 +111,15 @@
     _scn->cubeColors[3] = simd_make_float3(0.75,0.53,1.0);
     _scn->cubeColors[4] = simd_make_float3(1.0,1.0,1.0);
     _scn->cubeColors[5] = simd_make_float3(1.0,0.75,0.75);
+    
+    _scn->decalTransform = _decalTransform->matrix;
 
-    _scn->decalPos = simd_make_float3(10, -2.5, -10.5 * 0);
-    _scn->decalScale = simd_make_float3(3, 3, 3);
     
     for (int i = 0; i < 6; ++i)
     {
         [_boxes addObject:[[BoxCollider alloc] initWithSize:_scn->cubeScales[i] centeredAt:_scn->cubePositions[i]]];
     }
-    [[DebugDrawManager sharedInstance] registerBox:[[BoxCollider alloc] initWithSize:_scn->decalScale centeredAt:_scn->decalPos]];
+    [[DebugDrawManager sharedInstance] registerBox:[[BoxCollider alloc] initWithSize:_decalTransform->scale centeredAt:_decalTransform->position]];
     
 }
 
@@ -144,8 +150,10 @@
         [_playerTransform translate:vel];
     }
     
+    
     _scn->playerTransform = _playerTransform->matrix;
-
+    _scn->decalTransform = _decalTransform->matrix;
+    
     
     Scene* nextScene = [[Scene alloc] initWithScene:_scn];
     _gif->tick(deltaTime);
@@ -206,7 +214,18 @@
         {
             r->len = t[9];
             [[DebugDrawManager sharedInstance] registerRay:r];
-            _scn->decalPos = r->origin + r->direction*t[9];
+            simd_float3 hitPoint = r->origin + r->direction*t[9];
+            simd_float3 normalAtPoint = [b normalAtSurfacePoint:hitPoint];
+            [_decalTransform setPosition:hitPoint];
+            
+            [_decalTransform lookAt:_decalTransform->position - normalAtPoint*5];
+            NSLog(@"Normal: %f %f %f", normalAtPoint.x, normalAtPoint.y, normalAtPoint.z);
+            
+            simd_float3 playerEuler = [_playerTransform getEuler];
+            simd_float3 decalEuler = [_decalTransform getEuler];
+            [_decalTransform setRotationEuler:simd_make_float3(decalEuler.x, decalEuler.y, decalEuler.z)];
+       //     [_decalTransform setRotation:_playerTransform->rotation];
+            
         }
     }
 

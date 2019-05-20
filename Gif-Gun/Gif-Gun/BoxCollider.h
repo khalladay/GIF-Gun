@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 -(void)recenterAtPoint:(simd_float3)center;
 -(BOOL)intersectsBox:(BoxCollider*)box;
 -(BOOL)containsPoint:(simd_float3)point;
+-(simd_float3)normalAtSurfacePoint:(simd_float3)point;
 @end
 
 NS_ASSUME_NONNULL_END

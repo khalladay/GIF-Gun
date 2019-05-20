@@ -71,4 +71,35 @@
     (point.z >= min.z && point.z <= max.z);
 }
 
+-(simd_float3)normalAtSurfacePoint:(simd_float3)point
+{
+    if (point.x == min.x)
+    {
+        return simd_make_float3(-1,0,0);
+    }
+    
+    if (point.x == max.x)
+    {
+        return simd_make_float3(1,0,0);
+    }
+    
+    if (point.z == max.z)
+    {
+        return simd_make_float3(0,0,1);
+    }
+    
+    if (point.z == min.z)
+    {
+        return simd_make_float3(0,0,-1);
+    }
+    
+    if (point.y == min.y)
+    {
+    
+        return simd_make_float3(0,-1,0);
+    }
+    
+    return simd_make_float3(0,1,0);
+}
+
 @end

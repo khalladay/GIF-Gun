@@ -184,33 +184,35 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
         discard_fragment();
     }
     
-    float2 textureCoordinate = objectPosition.xz;
+    float2 textureCoordinate = objectPosition.xy;
     
     //wrap the texture coordinates around the geometry
     float2 xDeltVec = float2( (dfdx(objectPosition.x)), (dfdy(objectPosition.x)) );
-   // float2 yDeltVec = float2( (dfdx(objectPosition.y)), (dfdy(objectPosition.y)) );
+    float2 yDeltVec = float2( (dfdx(objectPosition.y)), (dfdy(objectPosition.y)) );
     float2 zDeltVec = float2( (dfdx(objectPosition.z)), (dfdy(objectPosition.z)) );
     
     float2 xDeltAbs = (abs(xDeltVec));
     float2 zDeltAbs = (abs(zDeltVec));
 
     
-    if (xDeltAbs.x < 0.0001 && xDeltAbs.y < 0.0001) discard_fragment();
-    if (zDeltAbs.x < 0.0001 && zDeltAbs.y < 0.0001) discard_fragment();
+   if (xDeltAbs.x < 0.0001 && xDeltAbs.y < 0.0001) discard_fragment();
 
-//    //float2 yDeltAbs = (abs(yDeltVec));
-//
-//    float xSign = xDeltAbs.x > xDeltAbs.y ? sign(xDeltVec.x) : sign(xDeltVec.y);
-//    float ySign = yDeltAbs.x > yDeltAbs.y ? sign(yDeltVec.x) : sign(yDeltVec.y);
-//    float zSign = zDeltAbs.x > zDeltAbs.y ? sign(zDeltVec.x) : sign(yDeltVec.y);
-//
-// //   if (yDeltAbs.x == 0 || yDeltAbs.y == 0) discard_fragment();
-//
-//    float xDelt = max(xDeltAbs.x, xDeltAbs.y);
-//    float yDelt = max(yDeltAbs.x, yDeltAbs.y);
-//    float zDelt = max(zDeltAbs.x, zDeltAbs.y);
+   // if (zDeltAbs.x < 0.0001 && zDeltAbs.y < 0.0001) discard_fragment();
+
+    float2 yDeltAbs = (abs(yDeltVec));
+    if (yDeltAbs.x < 0.0001 && yDeltAbs.y < 0.0001) discard_fragment();
+
+    float xSign = xDeltAbs.x > xDeltAbs.y ? sign(xDeltVec.x) : sign(xDeltVec.y);
+    float ySign = yDeltAbs.x > yDeltAbs.y ? sign(yDeltVec.x) : sign(yDeltVec.y);
+    float zSign = zDeltAbs.x > zDeltAbs.y ? sign(zDeltVec.x) : sign(yDeltVec.y);
+
+ //   if (yDeltAbs.x == 0 || yDeltAbs.y == 0) discard_fragment();
+
+    float xDelt = max(xDeltAbs.x, xDeltAbs.y);
+    float yDelt = max(yDeltAbs.x, yDeltAbs.y);
+    float zDelt = max(zDeltAbs.x, zDeltAbs.y);
     
-//    //lol wut
+    //lol wut
 //    if (xDelt > yDelt)
 //    {
 //        if (xDelt > zDelt)
@@ -248,9 +250,10 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
 //
 //        }
 //    }
-//
+
     
     textureCoordinate += 0.5;
+    textureCoordinate.y = 1.0 - textureCoordinate.y;
     
     uint4 tex = DecalTex.sample(samp, textureCoordinate);
     return float4(tex.x / 255.0, tex.y / 255.0f, tex.z / 255.0f, 1.0);

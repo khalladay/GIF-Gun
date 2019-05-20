@@ -124,12 +124,7 @@
     }
     
     
-    matrix_float4x4 modelMatrix = (matrix_float4x4){ {
-        {scn->decalScale.x, 0, 0, 0},
-        {0, scn->decalScale.y, 0, 0},
-        {0, 0, scn->decalScale.z, 0},
-        {scn->decalPos.x, scn->decalPos.y, scn->decalPos.z, 1.0f}
-    }};
+    matrix_float4x4 modelMatrix = scn->decalTransform;
 
     ObjectUniforms objectUniforms;
     objectUniforms.modelMatrix = modelMatrix;

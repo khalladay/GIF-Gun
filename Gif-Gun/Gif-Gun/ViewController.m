@@ -31,7 +31,7 @@
     _renderer = [[Renderer alloc] initWithView:_view];
     _game = [[GifGunGame alloc] initWithRenderer:_renderer];
     CGAssociateMouseAndMouseCursorPosition(false);
-    CGDisplayMoveCursorToPoint(CGMainDisplayID(), CGPointMake([_view window].frame.origin.x + [_view window].frame.size.width*0.5, [_view window].frame.origin.y - [_view window].frame.size.height*0.5));
+    CGDisplayMoveCursorToPoint(CGMainDisplayID(), CGPointMake([_view window].frame.origin.x + [_view window].frame.size.width*0.5, [_view window].frame.origin.y + [_view window].frame.size.height*0.5));
     [NSCursor hide];
 
     NSTrackingArea *trackingArea = [[NSTrackingArea alloc] initWithRect:NSZeroRect
