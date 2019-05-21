@@ -364,7 +364,6 @@ const int MeshTypeDragon = 2;
                 [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
 
                 [commandEncoder setFragmentTexture:_gDepth atIndex:0];
-                [commandEncoder setFragmentTexture:_gNormal atIndex:1];
                 [commandEncoder setFragmentTexture:_decalTexture atIndex:2];
 
                 for (const MTKSubmesh* submesh in _cubeMesh.submeshes)

@@ -73,32 +73,34 @@
 
 -(simd_float3)normalAtSurfacePoint:(simd_float3)point
 {
-    if (point.x == min.x)
+    const float epsilon = 0.001;
+    if ( fabs(point.x - min.x) < epsilon)
     {
         return simd_make_float3(-1,0,0);
     }
     
-    if (point.x == max.x)
+    if ( fabs(point.x - max.x) < epsilon)
     {
         return simd_make_float3(1,0,0);
     }
     
-    if (point.z == max.z)
+    if ( fabs(point.z - max.z) < epsilon)
     {
         return simd_make_float3(0,0,1);
     }
     
-    if (point.z == min.z)
+    if ( fabs(point.z - min.z) < epsilon)
     {
         return simd_make_float3(0,0,-1);
     }
     
-    if (point.y == min.y)
+    if ( fabs(point.y - min.y) < epsilon)
     {
     
         return simd_make_float3(0,-1,0);
     }
     
+    NSLog(@"Bad normal for point: %f %f %f, min: (%f %f %f), max: (%f %f %f)", point.x, point.y, point.z, min.x, min.y, min.z, max.x, max.y, max.z);
     return simd_make_float3(0,1,0);
 }
 

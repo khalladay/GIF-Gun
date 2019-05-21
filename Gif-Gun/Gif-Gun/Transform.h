@@ -35,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 -(void)setScale:(simd_float3)newScale;
 -(void)setPosition:(simd_float3)newPosition;
 -(void)lookAt:(simd_float3)target;
+-(void)lookAt:(simd_float3)target withUpVector:(simd_float3)up;
 -(void)setRotation:(quaternion_float)rot;
 
 -(simd_float3) getEuler;

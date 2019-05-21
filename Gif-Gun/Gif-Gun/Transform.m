@@ -66,14 +66,14 @@
     [self updateMatrix];
 }
 
--(void)lookAt:(simd_float3)target
+-(void)lookAt:(simd_float3)target withUpVector:(simd_float3)up
 {
     //construct a rotation matrix to get to this point (look matrix without translation)
     //convert that to a quaterion
     //set rotation
     simd_float3 fwd = simd_normalize(position - target);
-    simd_float3 world_up = simd_make_float3(0,1,0);
-  
+    simd_float3 world_up = up;
+    
     float upDot = simd_dot(world_up, fwd);
     if (upDot == 1.0 || upDot < -1 + 0.000001) //looking straight up or down
     {
@@ -82,17 +82,22 @@
     
     simd_float3 our_right = simd_normalize(simd_cross(world_up, fwd));
     simd_float3 cam_up = simd_normalize(simd_cross(fwd, our_right));
-
+    
     matrix_float3x3 basis = (matrix_float3x3)
-     {{
-     {our_right.x, cam_up.x, fwd.x},
-     {our_right.y, cam_up.y, fwd.y},
-     {our_right.z, cam_up.z, fwd.z}
-     }};
-
+    {{
+        {our_right.x, cam_up.x, fwd.x},
+        {our_right.y, cam_up.y, fwd.y},
+        {our_right.z, cam_up.z, fwd.z}
+    }};
+    
     rotation = quaternion_from_matrix3x3(basis);
     
     [self updateMatrix];
+}
+
+-(void)lookAt:(simd_float3)target
+{
+    [self lookAt:target withUpVector:simd_make_float3(0,1,0)];
 }
 
 -(void)translate:(simd_float3)vector
@@ -135,7 +140,7 @@
     double cosy_cosp = +1.0 - 2.0 * (q.y * q.y + q.z * q.z);
     euler.y = atan2(siny_cosp, cosy_cosp);
 
-    return euler;
+    return euler.zxy;
 }
 
 -(void)setRotationEuler:(simd_float3)euler

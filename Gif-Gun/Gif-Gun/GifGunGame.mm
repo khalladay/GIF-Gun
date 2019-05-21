@@ -216,15 +216,18 @@
             [[DebugDrawManager sharedInstance] registerRay:r];
             simd_float3 hitPoint = r->origin + r->direction*t[9];
             simd_float3 normalAtPoint = [b normalAtSurfacePoint:hitPoint];
-            [_decalTransform setPosition:hitPoint];
+            NSLog(@"Normal at point: %f %f %f",normalAtPoint.x, normalAtPoint.y, normalAtPoint.z);
+            [_decalTransform setPosition:hitPoint + r->direction * 1.5];
             
             [_decalTransform lookAt:_decalTransform->position - normalAtPoint*5];
-            NSLog(@"Normal: %f %f %f", normalAtPoint.x, normalAtPoint.y, normalAtPoint.z);
             
-            simd_float3 playerEuler = [_playerTransform getEuler];
-            simd_float3 decalEuler = [_decalTransform getEuler];
-            [_decalTransform setRotationEuler:simd_make_float3(decalEuler.x, decalEuler.y, decalEuler.z)];
-       //     [_decalTransform setRotation:_playerTransform->rotation];
+            float d = simd_dot(normalAtPoint, simd_make_float3(0, 1, 0));
+            if (d > 0.999 || d < -0.999)
+            {
+                [_decalTransform lookAt:_decalTransform->position - normalAtPoint*5 withUpVector:_playerTransform->up];
+
+            }
+            
             
         }
     }

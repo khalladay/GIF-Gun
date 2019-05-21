@@ -50,7 +50,6 @@ struct ObjectUniforms
 
 float linearizeDepth(float d, float nearClip, float farClip)
 {
-    // Calculate our projection constants (you should of course do this in the app code, I'm just showing how to do it)
     float ProjectionA = farClip / (farClip - nearClip);
     float ProjectionB = (-farClip * nearClip) / (farClip - nearClip);
     
@@ -146,24 +145,15 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
                             constant GlobalUniforms& globals [[buffer(GLOBAL_UNIFORM_INDEX)]],
                             constant ObjectUniforms& primitive [[buffer(OBJECT_UNIFORM_INDEX)]],
                             depth2d<float, access::sample> GDepth [[texture(0)]],
-                            texture2d<float, access::sample> GNormal [[texture(1)]],
                             texture2d<uint, access::sample> DecalTex [[texture(2)]]
                             )
 {
+    constexpr sampler samp(coord::normalized,address::repeat,filter::linear);
+
     float2 screenPos = fIN.screenPos.xy / fIN.screenPos.w;
-    
-    //Convert into a texture coordinate
-    float2 texCoord = float2(
-                             (1 + screenPos.x) / 2 + (0.5 / globals.resolution.x),
-                             (1 - screenPos.y) / 2 + (0.5 / globals.resolution.y)
-                             );
-    constexpr sampler samp(coord::normalized,
-                           address::repeat,
-                           filter::linear);
+    float2 texCoord = float2((1 + screenPos.x) / 2, (1 - screenPos.y) / 2);
     
     float4 depth = GDepth.sample(samp, texCoord);
-    float3 norm = normalize( (GNormal.sample(samp, texCoord).xyz - 0.5) * 2.0);
-        
     float linearDepth = linearizeDepth(depth.r, globals.nearClip, globals.farClip);
     
     //creates a ray with a known z position (far clip), so that rather than normalizing
@@ -172,8 +162,6 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
     float3 viewRay = ( float3(fIN.viewPos.xy / (fIN.viewPos.z), 1.0));
     float3 viewPosition = viewRay * linearDepth;
     float3 worldSpacePos = (globals.inv_viewMatrix* float4(viewPosition, 1)).xyz;
-    
-    //Convert from world space to object space
     float4 objectPosition = ( primitive.inv_modelMatrix * float4(worldSpacePos, 1));
     
     //Perform bounds check - cube verts are all at 0.5 increments, so if any dimension
@@ -184,75 +172,15 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
         discard_fragment();
     }
     
-    float2 textureCoordinate = objectPosition.xy;
-    
-    //wrap the texture coordinates around the geometry
-    float2 xDeltVec = float2( (dfdx(objectPosition.x)), (dfdy(objectPosition.x)) );
-    float2 yDeltVec = float2( (dfdx(objectPosition.y)), (dfdy(objectPosition.y)) );
+    //prevent any wrapping - this is a hack and only works because our scene is all 90 degree angles
     float2 zDeltVec = float2( (dfdx(objectPosition.z)), (dfdy(objectPosition.z)) );
-    
-    float2 xDeltAbs = (abs(xDeltVec));
     float2 zDeltAbs = (abs(zDeltVec));
+    if (zDeltAbs.x > 0.0001 || zDeltAbs.y > 0.0001)
+    {
+        discard_fragment();
+    }
 
-    
-   if (xDeltAbs.x < 0.0001 && xDeltAbs.y < 0.0001) discard_fragment();
-
-   // if (zDeltAbs.x < 0.0001 && zDeltAbs.y < 0.0001) discard_fragment();
-
-    float2 yDeltAbs = (abs(yDeltVec));
-    if (yDeltAbs.x < 0.0001 && yDeltAbs.y < 0.0001) discard_fragment();
-
-    float xSign = xDeltAbs.x > xDeltAbs.y ? sign(xDeltVec.x) : sign(xDeltVec.y);
-    float ySign = yDeltAbs.x > yDeltAbs.y ? sign(yDeltVec.x) : sign(yDeltVec.y);
-    float zSign = zDeltAbs.x > zDeltAbs.y ? sign(zDeltVec.x) : sign(yDeltVec.y);
-
- //   if (yDeltAbs.x == 0 || yDeltAbs.y == 0) discard_fragment();
-
-    float xDelt = max(xDeltAbs.x, xDeltAbs.y);
-    float yDelt = max(yDeltAbs.x, yDeltAbs.y);
-    float zDelt = max(zDeltAbs.x, zDeltAbs.y);
-    
-    //lol wut
-//    if (xDelt > yDelt)
-//    {
-//        if (xDelt > zDelt)
-//        {
-//            if (zDelt > yDelt)
-//            {
-//                textureCoordinate = objectPosition.xz;
-//            }
-//            else
-//            {
-//                textureCoordinate = objectPosition.xy;
-//            }
-//        }
-//        else
-//        {
-//            textureCoordinate = objectPosition.xz;
-//        }
-//    }
-//    else
-//    {
-//        if (yDelt > zDelt)
-//        {
-//            if (zDelt > xDelt)
-//            {
-//                textureCoordinate = objectPosition.yz;
-//            }
-//            else
-//            {
-//                textureCoordinate = objectPosition.xy;
-//            }
-//        }
-//        else
-//        {
-//            textureCoordinate = objectPosition.yz;
-//
-//        }
-//    }
-
-    
-    textureCoordinate += 0.5;
+    float2 textureCoordinate = objectPosition.xy + 0.5;
     textureCoordinate.y = 1.0 - textureCoordinate.y;
     
     uint4 tex = DecalTex.sample(samp, textureCoordinate);
