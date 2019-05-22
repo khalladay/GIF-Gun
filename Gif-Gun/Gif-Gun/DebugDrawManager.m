@@ -123,24 +123,27 @@
         [self buildDebugPipelines];
     }
     
-    
-    matrix_float4x4 modelMatrix = scn->decalTransform;
-
     ObjectUniforms objectUniforms;
-    objectUniforms.modelMatrix = modelMatrix;
-    objectUniforms.inv_modelMatrix = matrix_invert(objectUniforms.modelMatrix);
-    objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(objectUniforms.modelMatrix));
-    objectUniforms.modelViewMatrix = matrix_multiply(matrix_invert(scn->playerTransform), objectUniforms.modelMatrix);
-    
-    [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
-    [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
 
-    [commandEncoder pushDebugGroup:@"DebugBoxColliders"];
     [commandEncoder setRenderPipelineState:_debugLinePipeline];
-    [commandEncoder setVertexBuffer:_boxVertexBuffer offset:0 atIndex:0];
-    simd_float4 col = simd_make_float4(1,1,1, 1);
-    [commandEncoder setFragmentBytes:&col length:sizeof(simd_float4) atIndex:0];
-    [commandEncoder drawPrimitives:MTLPrimitiveTypeLine vertexStart:0 vertexCount:24];
+
+    for (int i = 0; i < [scn->decals count]; ++i)
+    {
+        matrix_float4x4 modelMatrix = scn->decals[i]->transform->matrix;
+        objectUniforms.modelMatrix = modelMatrix;
+        objectUniforms.inv_modelMatrix = matrix_invert(objectUniforms.modelMatrix);
+        objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(objectUniforms.modelMatrix));
+        objectUniforms.modelViewMatrix = matrix_multiply(matrix_invert(scn->playerTransform), objectUniforms.modelMatrix);
+
+        [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+        [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+
+        [commandEncoder pushDebugGroup:@"DebugBoxColliders"];
+        [commandEncoder setVertexBuffer:_boxVertexBuffer offset:0 atIndex:0];
+        simd_float4 col = simd_make_float4(1,1,1, 1);
+        [commandEncoder setFragmentBytes:&col length:sizeof(simd_float4) atIndex:0];
+        [commandEncoder drawPrimitives:MTLPrimitiveTypeLine vertexStart:0 vertexCount:24];
+    }
     
     [commandEncoder pushDebugGroup:@"DebugRays"];
 

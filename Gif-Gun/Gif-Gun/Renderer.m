@@ -59,7 +59,8 @@ const int MeshTypeDragon = 2;
     MTLVertexDescriptor* _fsQuadVertexDescriptor;
     int _loadedMeshes;
     
-    id<MTLTexture> _decalTexture;
+    NSMutableArray* _decalTextures;
+  //  id<MTLTexture> _decalTexture;
     
     CGSize _currentResolution;
     float farClip;
@@ -91,6 +92,7 @@ const int MeshTypeDragon = 2;
         _nextFrameIdx = 0;
         _loadedMeshes = 0;
         _mode = Default;
+        _decalTextures = [NSMutableArray new];
         
         [self loadMeshes];
         [self buildFullScreenQuad];
@@ -344,31 +346,35 @@ const int MeshTypeDragon = 2;
         
             if (renderPassDesc != nil)
             {
-                matrix_float4x4 modelMatrix = scn->decalTransform;
-                
                 id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDesc];
-                [commandEncoder pushDebugGroup:@"DrawDecals"];
-                [commandEncoder setRenderPipelineState:_decalPipeline];
-                [commandEncoder setDepthStencilState:_decalDepthState];
-                [commandEncoder setVertexBuffer:_cubeMesh.vertexBuffers[0].buffer offset:0 atIndex:0];
-                [commandEncoder setCullMode:MTLCullModeNone];
-                [commandEncoder setVertexBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
-                [commandEncoder setFragmentBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
 
-                objectUniforms.modelMatrix = modelMatrix;
-                objectUniforms.inv_modelMatrix = matrix_invert(modelMatrix);
-                objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(modelMatrix));
-                objectUniforms.modelViewMatrix = matrix_multiply(globalUniforms.viewMatrix, modelMatrix);
-                
-                [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
-                [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
-
-                [commandEncoder setFragmentTexture:_gDepth atIndex:0];
-                [commandEncoder setFragmentTexture:_decalTexture atIndex:2];
-
-                for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
+                for (int i = 0; i < [scn->decals count]; ++i)
                 {
-                    [commandEncoder drawIndexedPrimitives:submesh.primitiveType indexCount:submesh.indexCount indexType:submesh.indexType indexBuffer:submesh.indexBuffer.buffer indexBufferOffset:submesh.indexBuffer.offset];
+                    matrix_float4x4 modelMatrix = scn->decals[i]->transform->matrix;
+                    
+                    [commandEncoder pushDebugGroup:@"DrawDecals"];
+                    [commandEncoder setRenderPipelineState:_decalPipeline];
+                    [commandEncoder setDepthStencilState:_decalDepthState];
+                    [commandEncoder setVertexBuffer:_cubeMesh.vertexBuffers[0].buffer offset:0 atIndex:0];
+                    [commandEncoder setCullMode:MTLCullModeNone];
+                    [commandEncoder setVertexBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
+                    [commandEncoder setFragmentBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
+
+                    objectUniforms.modelMatrix = modelMatrix;
+                    objectUniforms.inv_modelMatrix = matrix_invert(modelMatrix);
+                    objectUniforms.normalMatrix = matrix_inverse_transpose(matrix3x3_upper_left(modelMatrix));
+                    objectUniforms.modelViewMatrix = matrix_multiply(globalUniforms.viewMatrix, modelMatrix);
+                    
+                    [commandEncoder setVertexBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+                    [commandEncoder setFragmentBytes:&objectUniforms length:sizeof(ObjectUniforms) atIndex:OBJECT_UNIFORM_INDEX];
+
+                    [commandEncoder setFragmentTexture:_gDepth atIndex:0];
+                    [commandEncoder setFragmentTexture:_decalTextures[scn->decals[i]->decalIndex] atIndex:2];
+
+                    for (const MTKSubmesh* submesh in _cubeMesh.submeshes)
+                    {
+                        [commandEncoder drawIndexedPrimitives:submesh.primitiveType indexCount:submesh.indexCount indexType:submesh.indexType indexBuffer:submesh.indexBuffer.buffer indexBufferOffset:submesh.indexBuffer.offset];
+                    }
                 }
                 [commandEncoder endEncoding];
             }
@@ -438,7 +444,7 @@ const int MeshTypeDragon = 2;
         [commandEncoder setVertexBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
         [commandEncoder setFragmentBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
 
-        [[DebugDrawManager sharedInstance] drawScene:scn withDevice:_device andEncoder:commandEncoder];
+      //  [[DebugDrawManager sharedInstance] drawScene:scn withDevice:_device andEncoder:commandEncoder];
         [commandEncoder endEncoding];
 
     }
@@ -471,7 +477,7 @@ const int MeshTypeDragon = 2;
     }
 }
 
--(void)createDecalTextureWithSize:(CGSize)size data:(const uint8_t*)bytes
+-(int)createDecalTextureWithSize:(CGSize)size data:(const uint8_t*)bytes
 {
     MTLTextureDescriptor* texDesc = [MTLTextureDescriptor new];
     texDesc.textureType = MTLTextureType2D;
@@ -481,14 +487,16 @@ const int MeshTypeDragon = 2;
     texDesc.storageMode = MTLStorageModeManaged;
     texDesc.usage = MTLTextureUsageShaderRead;
 
-    _decalTexture = [_device newTextureWithDescriptor:texDesc];
-    [self updateDecalTexture:size data:bytes];
+    [_decalTextures addObject: [_device newTextureWithDescriptor:texDesc]];
+    [self updateDecalTexture:[_decalTextures count]-1 size:size data:bytes];
+    
+    return [_decalTextures count]-1;
 
 }
 
--(void)updateDecalTexture:(CGSize)size data:(const uint8_t *)bytes
+-(void)updateDecalTexture:(int)index size:(CGSize)size data:(const uint8_t *)bytes
 {
-    [_decalTexture replaceRegion:MTLRegionMake2D(0, 0, size.width, size.height) mipmapLevel:0 slice:0 withBytes:bytes bytesPerRow:size.width*4 bytesPerImage:size.width * size.height * 4];
+    [_decalTextures[index] replaceRegion:MTLRegionMake2D(0, 0, size.width, size.height) mipmapLevel:0 slice:0 withBytes:bytes bytesPerRow:size.width*4 bytesPerImage:size.width * size.height * 4];
 }
 
 @end
@@ -506,10 +514,19 @@ const int MeshTypeDragon = 2;
             cubeScales[i] = scn->cubeScales[i];
         }
     
-        
+        decals = [[NSMutableArray alloc] init];
+        for (int i = 0; i < [scn->decals count]; ++i)
+        {
+            [decals addObject:scn->decals[i]];
+        }
         playerTransform = matrix_multiply(matrix_identity_float4x4, scn->playerTransform);
-        decalTransform = scn->decalTransform;
     }
     return self;
 }
+@end
+
+@implementation DecalInstance
+
+
+
 @end

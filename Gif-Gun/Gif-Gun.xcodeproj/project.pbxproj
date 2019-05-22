@@ -7,13 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0781A6B42287111800F2B98A /* snoopy.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6B32287111700F2B98A /* snoopy.gif */; };
 		0781A6B72287524400F2B98A /* Transform.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6B62287524400F2B98A /* Transform.m */; };
 		0781A6BA2288805B00F2B98A /* BoxCollider.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6B92288805B00F2B98A /* BoxCollider.m */; };
 		0781A6BD228882CA00F2B98A /* Ray.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6BC228882CA00F2B98A /* Ray.m */; };
 		0781A6BF228AFF8600F2B98A /* CollisionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6BE228AFF8600F2B98A /* CollisionTests.m */; };
 		0781A6C3228C3B5500F2B98A /* DebugDrawManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6C2228C3B5500F2B98A /* DebugDrawManager.m */; };
 		0781A6C6228C523300F2B98A /* metal_utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 0781A6C5228C523300F2B98A /* metal_utils.m */; };
+		0781A6CD2294E8E000F2B98A /* cena.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6C82294E8DF00F2B98A /* cena.gif */; };
+		0781A6CE2294E8E000F2B98A /* otter.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6C92294E8E000F2B98A /* otter.gif */; };
+		0781A6D02294E8E000F2B98A /* snoopy.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6CB2294E8E000F2B98A /* snoopy.gif */; };
+		0781A6D22294EFA600F2B98A /* ok.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6D12294EFA600F2B98A /* ok.gif */; };
 		07FDC9422278826500E620ED /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9412278826500E620ED /* AppDelegate.m */; };
 		07FDC9442278826700E620ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9432278826700E620ED /* Assets.xcassets */; };
 		07FDC9472278826800E620ED /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9452278826800E620ED /* MainMenu.xib */; };
@@ -35,7 +38,6 @@
 
 /* Begin PBXFileReference section */
 		0781A6B02285B20300F2B98A /* shader_structs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = shader_structs.h; sourceTree = "<group>"; };
-		0781A6B32287111700F2B98A /* snoopy.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = snoopy.gif; path = "Gif-Gun/snoopy.gif"; sourceTree = "<group>"; };
 		0781A6B52287524400F2B98A /* Transform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Transform.h; sourceTree = "<group>"; };
 		0781A6B62287524400F2B98A /* Transform.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Transform.m; sourceTree = "<group>"; };
 		0781A6B82288805B00F2B98A /* BoxCollider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BoxCollider.h; sourceTree = "<group>"; };
@@ -48,6 +50,10 @@
 		0781A6C2228C3B5500F2B98A /* DebugDrawManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DebugDrawManager.m; sourceTree = "<group>"; };
 		0781A6C4228C519800F2B98A /* metal_utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = metal_utils.h; sourceTree = "<group>"; };
 		0781A6C5228C523300F2B98A /* metal_utils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = metal_utils.m; sourceTree = "<group>"; };
+		0781A6C82294E8DF00F2B98A /* cena.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = cena.gif; path = "Gif-Gun/gifs/cena.gif"; sourceTree = "<group>"; };
+		0781A6C92294E8E000F2B98A /* otter.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = otter.gif; path = "Gif-Gun/gifs/otter.gif"; sourceTree = "<group>"; };
+		0781A6CB2294E8E000F2B98A /* snoopy.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = snoopy.gif; path = "Gif-Gun/gifs/snoopy.gif"; sourceTree = "<group>"; };
+		0781A6D12294EFA600F2B98A /* ok.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = ok.gif; path = "Gif-Gun/gifs/ok.gif"; sourceTree = "<group>"; };
 		07FDC93D2278826500E620ED /* Gif-Gun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Gif-Gun.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		07FDC9402278826500E620ED /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		07FDC9412278826500E620ED /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -95,7 +101,10 @@
 		07FDC9342278826500E620ED = {
 			isa = PBXGroup;
 			children = (
-				0781A6B32287111700F2B98A /* snoopy.gif */,
+				0781A6D12294EFA600F2B98A /* ok.gif */,
+				0781A6C82294E8DF00F2B98A /* cena.gif */,
+				0781A6C92294E8E000F2B98A /* otter.gif */,
+				0781A6CB2294E8E000F2B98A /* snoopy.gif */,
 				07FDC9742279D90E00E620ED /* cube.obj */,
 				07FDC9752279D90E00E620ED /* dragon.obj */,
 				07FDC93F2278826500E620ED /* Gif-Gun */,
@@ -221,7 +230,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0781A6B42287111800F2B98A /* snoopy.gif in Resources */,
+				0781A6D22294EFA600F2B98A /* ok.gif in Resources */,
+				0781A6CD2294E8E000F2B98A /* cena.gif in Resources */,
+				0781A6CE2294E8E000F2B98A /* otter.gif in Resources */,
+				0781A6D02294E8E000F2B98A /* snoopy.gif in Resources */,
 				07FDC9762279D90E00E620ED /* cube.obj in Resources */,
 				07FDC9772279D90E00E620ED /* dragon.obj in Resources */,
 				07FDC9442278826700E620ED /* Assets.xcassets in Resources */,

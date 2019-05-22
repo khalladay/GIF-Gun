@@ -25,7 +25,8 @@
     
     simd_float3 _playerBounds; //player is modelled as a cube collider
     
-    gif_read::StreamingCompressedGIF* _gif;
+    gif_read::StreamingCompressedGIF* _gifs[256];
+    int gifCount;
     
     bool _forward;
     bool _back;
@@ -40,6 +41,7 @@
     NSMutableArray* _boxes;
 }
 
+-(void)loadGIFs;
 -(void)constructScene;
 
 @end
@@ -59,38 +61,58 @@
         _boxes = [NSMutableArray new];
         _playerBox = [[BoxCollider alloc] initWithMin:simd_make_float3(-1,-1, -1) andMax:simd_make_float3(1, 1, 1)];
         _candidateBox = [[BoxCollider alloc] initWithMin:simd_make_float3(-1,-1, -1) andMax:simd_make_float3(1, 1, 1)];
-        
         _decalTransform = [Transform new];
 
+        
         [_decalTransform setPosition:simd_make_float3(10, -2.5, -10.5 * 0)];
         [_decalTransform setScale:simd_make_float3(3, 3, 3)];
         
-        NSURL* imgURL = [[NSBundle mainBundle] URLForResource:@"snoopy" withExtension:@"gif"];
-        NSString* str = [imgURL path];
-        
-        FILE* fp = fopen([str cStringUsingEncoding:NSUTF8StringEncoding], "rb");
-        fseek(fp, 0, SEEK_END);
-        size_t len = ftell(fp);
-        
-        uint8_t* gifData = (uint8_t*)malloc(len);
-        rewind(fp);
-        fread(gifData, len, 1, fp);
-        
-        _gif = new gif_read::StreamingCompressedGIF(gifData);
-        [_renderer createDecalTextureWithSize:CGSizeMake(_gif->getWidth(), _gif->getHeight()) data:_gif->getCurrentFrame()];
-        
-        free(gifData);
-        fclose(fp);
-        
+        [self loadGIFs];
         [self constructScene];
     }
     
     return self;
 }
 
+-(void)loadGIFs
+{
+    NSString * resourcePath = [[NSBundle mainBundle] resourcePath];
+    NSError * error;
+    NSArray * directoryContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:resourcePath error:&error];
+    
+    for (const NSString* str in directoryContents)
+    {
+        NSString* pathless =[str stringByDeletingPathExtension];
+        NSURL* imgURL = [[NSBundle mainBundle] URLForResource:pathless withExtension:@"gif"];
+        if (imgURL)
+        {
+            NSString* p = [imgURL path];
+            FILE* fp = fopen([ p cStringUsingEncoding:NSUTF8StringEncoding], "rb");
+            fseek(fp, 0, SEEK_END);
+            size_t len = ftell(fp);
+            
+            uint8_t* gifData = (uint8_t*)malloc(len);
+            rewind(fp);
+            fread(gifData, len, 1, fp);
+            
+            _gifs[gifCount] =new gif_read::StreamingCompressedGIF(gifData);
+            
+            [_renderer createDecalTextureWithSize:CGSizeMake(_gifs[gifCount]->getWidth(), _gifs[gifCount]->getHeight()) data:_gifs[gifCount]->getCurrentFrame()];
+            
+            gifCount++;
+            
+            free(gifData);
+            fclose(fp);
+        }
+    }
+
+
+}
+
 -(void)constructScene
 {
     _scn = [Scene new];
+    _scn->decals = [NSMutableArray new];
     _scn->cubePositions[0] = simd_make_float3(0,0,15);
     _scn->cubePositions[1] = simd_make_float3(0,0,-15);
     _scn->cubePositions[2] = simd_make_float3(15,0,0);
@@ -112,13 +134,11 @@
     _scn->cubeColors[4] = simd_make_float3(1.0,1.0,1.0);
     _scn->cubeColors[5] = simd_make_float3(1.0,0.75,0.75);
     
-    _scn->decalTransform = _decalTransform->matrix;
-
-    
     for (int i = 0; i < 6; ++i)
     {
         [_boxes addObject:[[BoxCollider alloc] initWithSize:_scn->cubeScales[i] centeredAt:_scn->cubePositions[i]]];
     }
+    
     [[DebugDrawManager sharedInstance] registerBox:[[BoxCollider alloc] initWithSize:_decalTransform->scale centeredAt:_decalTransform->position]];
     
 }
@@ -152,12 +172,17 @@
     
     
     _scn->playerTransform = _playerTransform->matrix;
-    _scn->decalTransform = _decalTransform->matrix;
     
     
     Scene* nextScene = [[Scene alloc] initWithScene:_scn];
-    _gif->tick(deltaTime);
-    [_renderer updateDecalTexture:CGSizeMake(_gif->getWidth(), _gif->getHeight()) data:_gif->getCurrentFrame()];
+    for (int i = 0; i < gifCount; ++i)
+    {
+        _gifs[i]->tick(deltaTime);
+        [_renderer updateDecalTexture:i size:CGSizeMake(_gifs[i]->getWidth(), _gifs[i]->getHeight()) data:_gifs[i]->getCurrentFrame()];
+
+    }
+    
+    
     [_renderer enqeueScene:nextScene];
 }
 
@@ -217,18 +242,23 @@
             simd_float3 hitPoint = r->origin + r->direction*t[9];
             simd_float3 normalAtPoint = [b normalAtSurfacePoint:hitPoint];
             NSLog(@"Normal at point: %f %f %f",normalAtPoint.x, normalAtPoint.y, normalAtPoint.z);
-            [_decalTransform setPosition:hitPoint + r->direction * 1.5];
             
-            [_decalTransform lookAt:_decalTransform->position - normalAtPoint*5];
-            
-            float d = simd_dot(normalAtPoint, simd_make_float3(0, 1, 0));
-            if (d > 0.999 || d < -0.999)
-            {
-                [_decalTransform lookAt:_decalTransform->position - normalAtPoint*5 withUpVector:_playerTransform->up];
+            DecalInstance* d = [DecalInstance new];
+            d->decalIndex = (int)[_scn->decals count] % gifCount;
+           
+            d->transform = [[Transform alloc] init];
+            [d->transform setScale:simd_make_float3(3,3,3)];
+            [d->transform setPosition:hitPoint + r->direction * 1.5];
+            [d->transform lookAt:d->transform->position - normalAtPoint*5];
 
+            float dot = simd_dot(normalAtPoint, simd_make_float3(0, 1, 0));
+            if (dot > 0.999 || dot < -0.999)
+            {
+                [d->transform lookAt:d->transform->position - normalAtPoint*5 withUpVector:_playerTransform->up];
             }
             
-            
+            [_scn->decals addObject:d];
+
         }
     }
 

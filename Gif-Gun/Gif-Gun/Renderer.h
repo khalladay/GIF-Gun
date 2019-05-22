@@ -9,7 +9,17 @@
 #import <Foundation/Foundation.h>
 #import <MetalKit/MetalKit.h>
 #import "LoadingThread.h"
+#import "Transform.h"
 NS_ASSUME_NONNULL_BEGIN
+
+@interface DecalInstance : NSObject
+{
+    @public
+    int decalIndex;
+    Transform* transform;
+}
+@end
+
 
 @interface Scene : NSObject
 {
@@ -19,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
     simd_float3 cubeScales[6];
     simd_float3 cubeColors[6];
     
-    matrix_float4x4 decalTransform;
+    NSMutableArray<DecalInstance*>* decals;
 }
 
 -(nonnull instancetype)initWithScene:(Scene*)scn;
@@ -38,8 +48,8 @@ typedef enum
 -(void)drawInView:(MTKView*)view;
 -(void)enqeueScene:(Scene*)scn;
 -(void)handleSizeChange:(CGSize)size;
--(void)createDecalTextureWithSize:(CGSize)size data:(const uint8_t*)bytes;
--(void)updateDecalTexture:(CGSize)size data:(const uint8_t*)bytes;
+-(int)createDecalTextureWithSize:(CGSize)size data:(const uint8_t*)bytes;
+-(void)updateDecalTexture:(int)index size:(CGSize)size data:(const uint8_t*)bytes;
 -(void)setRenderMode:(RenderMode)mode;
 @end
 

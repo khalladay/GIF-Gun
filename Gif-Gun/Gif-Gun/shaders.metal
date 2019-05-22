@@ -181,7 +181,7 @@ fragment float4 DecalFSMain(DecalVertexOUT fIN [[stage_in]],
     }
 
     float2 textureCoordinate = objectPosition.xy + 0.5;
-    textureCoordinate.y = 1.0 - textureCoordinate.y;
+    textureCoordinate.xy = 1.0 - textureCoordinate.xy;
     
     uint4 tex = DecalTex.sample(samp, textureCoordinate);
     return float4(tex.x / 255.0, tex.y / 255.0f, tex.z / 255.0f, 1.0);
