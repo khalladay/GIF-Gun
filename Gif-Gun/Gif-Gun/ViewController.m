@@ -68,15 +68,21 @@
             [self->_game spray];
         }
         
-        if ([[event characters] isEqualToString:@"0"])
+        if ([[event characters] isEqualToString:@"1"])
         {
             [self->_renderer setRenderMode:Default];
         }
 
-        if ([[event characters] isEqualToString:@"1"])
+        if ([[event characters] isEqualToString:@"2"])
         {
             [self->_renderer setRenderMode:VisualizePositionBuffer];
         }
+        
+        if ([[event characters] isEqualToString:@"3"])
+        {
+            [self->_renderer setRenderMode:DebugDraw];
+        }
+
 
         return event;
         
@@ -115,6 +121,7 @@
 
 - (void)mouseDragged:(NSEvent *)event
 {
+    [_game updateMouse:CGPointMake(event.deltaX, event.deltaY)];
 }
 
 - (void)scrollWheel:(NSEvent *)event

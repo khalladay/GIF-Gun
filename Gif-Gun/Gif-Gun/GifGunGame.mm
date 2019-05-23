@@ -217,12 +217,16 @@
 -(void)spray
 {
     Ray *r = [[Ray alloc] initWithOrigin:_playerTransform->position andDirection:_playerTransform->forward];
+    
+    const int NO_HIT = 9999;
+    float shortestDist = NO_HIT;
+    BoxCollider* closestBox = nil;
+    
     for (int i = 0; i < 6; ++i)
     {
         BoxCollider* b = _boxes[i];
 
         //ray/box collision test https://tavianator.com/fast-branchless-raybounding-box-intersections/
-        const int NO_HIT = -1;
         
         float t[10];
         t[1] = (b->min.x - r->origin.x)/r->direction.x;
@@ -235,32 +239,36 @@
         t[8] = fmin(fmin(fmax(t[1], t[2]), fmax(t[3], t[4])), fmax(t[5], t[6]));
         t[9] = (t[8] < 0 || t[7] > t[8]) ? NO_HIT : t[7];
         
-        if (t[9] != NO_HIT) //in this scene, a ray should always hit
+        if (t[9] != NO_HIT && t[9] < shortestDist) //in this scene, a ray should always hit
         {
-            r->len = t[9];
-            [[DebugDrawManager sharedInstance] registerRay:r];
-            simd_float3 hitPoint = r->origin + r->direction*t[9];
-            simd_float3 normalAtPoint = [b normalAtSurfacePoint:hitPoint];
-            NSLog(@"Normal at point: %f %f %f",normalAtPoint.x, normalAtPoint.y, normalAtPoint.z);
-            
-            DecalInstance* d = [DecalInstance new];
-            d->decalIndex = (int)[_scn->decals count] % gifCount;
-           
-            d->transform = [[Transform alloc] init];
-            [d->transform setScale:simd_make_float3(3,3,3)];
-            [d->transform setPosition:hitPoint + r->direction * 1.5];
-            [d->transform lookAt:d->transform->position - normalAtPoint*5];
-
-            float dot = simd_dot(normalAtPoint, simd_make_float3(0, 1, 0));
-            if (dot > 0.999 || dot < -0.999)
-            {
-                [d->transform lookAt:d->transform->position - normalAtPoint*5 withUpVector:_playerTransform->up];
-            }
-            
-            [_scn->decals addObject:d];
-
+            closestBox = b;
+            shortestDist = t[9];
         }
     }
+    
+    if (closestBox == nil) return;
+    
+    r->len = shortestDist;
+    [[DebugDrawManager sharedInstance] registerRay:r];
+    simd_float3 hitPoint = r->origin + r->direction*shortestDist;
+    simd_float3 normalAtPoint = [closestBox normalAtSurfacePoint:hitPoint];
+    NSLog(@"Normal at point: %f %f %f",normalAtPoint.x, normalAtPoint.y, normalAtPoint.z);
+    
+    DecalInstance* d = [DecalInstance new];
+    d->decalIndex = (int)[_scn->decals count] % gifCount;
+    
+    d->transform = [[Transform alloc] init];
+    [d->transform setScale:simd_make_float3(3,3,3)];
+    [d->transform setPosition:hitPoint + r->direction * 1.5];
+    [d->transform lookAt:d->transform->position - normalAtPoint*5];
+    
+    float dot = simd_dot(normalAtPoint, simd_make_float3(0, 1, 0));
+    if (dot > 0.999 || dot < -0.999)
+    {
+        [d->transform lookAt:d->transform->position - normalAtPoint*5 withUpVector:_playerTransform->up];
+    }
+    
+    [_scn->decals addObject:d];
 
 }
 

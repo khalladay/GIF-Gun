@@ -426,6 +426,7 @@ const int MeshTypeDragon = 2;
 
     }
     
+    if (_mode == DebugDraw)
     {
         MTLRenderPassDescriptor* renderPassDesc = view.currentRenderPassDescriptor;
         renderPassDesc.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0);
@@ -444,7 +445,7 @@ const int MeshTypeDragon = 2;
         [commandEncoder setVertexBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
         [commandEncoder setFragmentBuffer:_globalUniforms[_nextFrameIdx] offset:0 atIndex:GLOBAL_UNIFORM_INDEX];
 
-      //  [[DebugDrawManager sharedInstance] drawScene:scn withDevice:_device andEncoder:commandEncoder];
+        [[DebugDrawManager sharedInstance] drawScene:scn withDevice:_device andEncoder:commandEncoder];
         [commandEncoder endEncoding];
 
     }

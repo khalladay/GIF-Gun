@@ -39,7 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
 typedef enum
 {
     Default = 0,
-    VisualizePositionBuffer
+    VisualizePositionBuffer,
+    DebugDraw
 }RenderMode;
 
 @interface Renderer : NSObject<LoadingThreadDelegate>
