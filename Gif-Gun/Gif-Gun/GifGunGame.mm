@@ -25,7 +25,8 @@
     
     simd_float3 _playerBounds; //player is modelled as a cube collider
     
-    gif_read::StreamingCompressedGIF* _gifs[256];
+    gif_read::StreamingGIF* _gifs[256];
+    
     int gifCount;
     
     bool _forward;
@@ -95,9 +96,9 @@
             rewind(fp);
             fread(gifData, len, 1, fp);
             
-            _gifs[gifCount] =new gif_read::StreamingCompressedGIF(gifData);
+            _gifs[gifCount] =new gif_read::StreamingGIF(gifData);
             
-            [_renderer createDecalTextureWithSize:CGSizeMake(_gifs[gifCount]->getWidth(), _gifs[gifCount]->getHeight()) data:_gifs[gifCount]->getCurrentFrame()];
+          //  [_renderer createDecalTextureWithSize:CGSizeMake(_gifs[gifCount]->getWidth(), _gifs[gifCount]->getHeight()) data:_gifs[gifCount]->getCurrentFrame()];
             
             gifCount++;
             
@@ -178,7 +179,14 @@
     for (int i = 0; i < gifCount; ++i)
     {
         _gifs[i]->tick(deltaTime);
-        [_renderer updateDecalTexture:i size:CGSizeMake(_gifs[i]->getWidth(), _gifs[i]->getHeight()) data:_gifs[i]->getCurrentFrame()];
+    }
+    
+    for (int i = 0; i < [_scn->decals count]; ++i)
+    {
+        DecalInstance* d = _scn->decals[i];
+        gif_read::StreamingGIF& gif = *_gifs[d->decalIndex];
+        
+        [_renderer updateDecalTexture:d->textureHandle size:CGSizeMake(gif.getWidth(), gif.getHeight()) data:gif.getCurrentFrame(d->gifIter)];
 
     }
     
@@ -255,7 +263,11 @@
     NSLog(@"Normal at point: %f %f %f",normalAtPoint.x, normalAtPoint.y, normalAtPoint.z);
     
     DecalInstance* d = [DecalInstance new];
-    d->decalIndex = (int)[_scn->decals count] % gifCount;
+    d->decalIndex = 1;//(int)[_scn->decals count] % gifCount;
+    gif_read::StreamingGIF& gif = *_gifs[d->decalIndex];
+    d->gifIter = gif.createIterator();
+
+    d->textureHandle = [_renderer createDecalTextureWithSize:CGSizeMake(gif.getWidth(), gif.getHeight()) data:gif.getCurrentFrame(d->gifIter)];
     
     d->transform = [[Transform alloc] init];
     [d->transform setScale:simd_make_float3(3,3,3)];

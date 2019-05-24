@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 {
     @public
     int decalIndex;
+    int textureHandle;
+    uint32 gifIter;
     Transform* transform;
 }
 @end
