@@ -17,6 +17,8 @@
 		0781A6CE2294E8E000F2B98A /* otter.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6C92294E8E000F2B98A /* otter.gif */; };
 		0781A6D02294E8E000F2B98A /* snoopy.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6CB2294E8E000F2B98A /* snoopy.gif */; };
 		0781A6D22294EFA600F2B98A /* ok.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6D12294EFA600F2B98A /* ok.gif */; };
+		0781A6D62298C92400F2B98A /* giphy-downsized.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6D32298C92300F2B98A /* giphy-downsized.gif */; };
+		0781A6DA2298C98A00F2B98A /* HkaU9nnf4pqEg.gif in Resources */ = {isa = PBXBuildFile; fileRef = 0781A6D92298C98A00F2B98A /* HkaU9nnf4pqEg.gif */; };
 		07FDC9422278826500E620ED /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 07FDC9412278826500E620ED /* AppDelegate.m */; };
 		07FDC9442278826700E620ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9432278826700E620ED /* Assets.xcassets */; };
 		07FDC9472278826800E620ED /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 07FDC9452278826800E620ED /* MainMenu.xib */; };
@@ -54,6 +56,8 @@
 		0781A6C92294E8E000F2B98A /* otter.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = otter.gif; path = "Gif-Gun/gifs/otter.gif"; sourceTree = "<group>"; };
 		0781A6CB2294E8E000F2B98A /* snoopy.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = snoopy.gif; path = "Gif-Gun/gifs/snoopy.gif"; sourceTree = "<group>"; };
 		0781A6D12294EFA600F2B98A /* ok.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = ok.gif; path = "Gif-Gun/gifs/ok.gif"; sourceTree = "<group>"; };
+		0781A6D32298C92300F2B98A /* giphy-downsized.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = "giphy-downsized.gif"; path = "Gif-Gun/gifs/giphy-downsized.gif"; sourceTree = "<group>"; };
+		0781A6D92298C98A00F2B98A /* HkaU9nnf4pqEg.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = HkaU9nnf4pqEg.gif; path = "Gif-Gun/gifs/HkaU9nnf4pqEg.gif"; sourceTree = "<group>"; };
 		07FDC93D2278826500E620ED /* Gif-Gun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Gif-Gun.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		07FDC9402278826500E620ED /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		07FDC9412278826500E620ED /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -101,6 +105,8 @@
 		07FDC9342278826500E620ED = {
 			isa = PBXGroup;
 			children = (
+				0781A6D92298C98A00F2B98A /* HkaU9nnf4pqEg.gif */,
+				0781A6D32298C92300F2B98A /* giphy-downsized.gif */,
 				0781A6D12294EFA600F2B98A /* ok.gif */,
 				0781A6C82294E8DF00F2B98A /* cena.gif */,
 				0781A6C92294E8E000F2B98A /* otter.gif */,
@@ -230,6 +236,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0781A6DA2298C98A00F2B98A /* HkaU9nnf4pqEg.gif in Resources */,
+				0781A6D62298C92400F2B98A /* giphy-downsized.gif in Resources */,
 				0781A6D22294EFA600F2B98A /* ok.gif in Resources */,
 				0781A6CD2294E8E000F2B98A /* cena.gif in Resources */,
 				0781A6CE2294E8E000F2B98A /* otter.gif in Resources */,

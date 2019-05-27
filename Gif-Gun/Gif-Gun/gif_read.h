@@ -73,6 +73,7 @@ namespace gif_read
         float getDurationInSeconds() const;
         
         uint32 createIterator();
+        bool isIteratorValid(uint32 iterator);
         void destroyIterator(uint32 iterator);
         
         //returns true if time has advanced enough to get a new frame

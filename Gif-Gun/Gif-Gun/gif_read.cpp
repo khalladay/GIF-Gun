@@ -330,7 +330,7 @@ namespace gif_read
             }
         }
         
-        GT_CHECK(bytesWritten == indexStream.numIndices, "Didn't write all bytes to color array");
+      //  GT_CHECK(bytesWritten == indexStream.numIndices, "Didn't write all bytes to color array");
     }
 
     const uint8* parseHeader(const uint8* dataPtr, Header& header)
@@ -486,10 +486,11 @@ namespace gif_read
         const uint8* subBlockIterPtr = dataPtr;
         
         uint8 sizeOfSubBlock = *subBlockIterPtr++;
-        uint16 totalSizeOfAllCodes = 0;
+        uint32 totalSizeOfAllCodes = 0; //needs to be 32 bit or else it will overflow on larger gifs
         while(sizeOfSubBlock > 0)
         {
             totalSizeOfAllCodes += sizeOfSubBlock;
+
             subBlockIterPtr += sizeOfSubBlock;
             sizeOfSubBlock = *subBlockIterPtr;
             if (sizeOfSubBlock > 0) subBlockIterPtr++;
@@ -497,7 +498,7 @@ namespace gif_read
 
         outSizes[frameIdx] = totalSizeOfAllCodes;
         outData[frameIdx] = (uint8*)GT_MALLOC(totalSizeOfAllCodes);
-        uint16 totalCopiedBytes = 0;
+        uint32 totalCopiedBytes = 0;
         
         //then iterate over all subblocks again to get compressed data, now that we've allocated the buffer to hold it
 
@@ -802,6 +803,7 @@ namespace gif_read
     
     bool StreamingGIF::tickSingleIterator(uint32 iterator, float deltaTime)
     {
+        if (!isIteratorValid(iterator)) return false;
         GT_CHECK(iterator < _impl->maxIterators, "Attempting to tick an iterator that does not exist");
         GT_CHECK(iterator < _impl->numIterators, "Attempting to tick an iterator that does not exist");
         StreamingGIFIter& iter = _impl->iterators[iterator];
@@ -871,6 +873,14 @@ namespace gif_read
         }
     }
     
+    bool StreamingGIF::isIteratorValid(uint32 iterator)
+    {
+        if (iterator > _impl->maxIterators) return false;
+        if (iterator > _impl->numIterators) return false;
+        if (_impl->iterators[iterator].currentFrame == nullptr) return false;
+        return true;
+    }
+    
     uint32 StreamingGIF::createIterator()
     {
         StreamingGIFIter& iter = _impl->iterators[_impl->numIterators];
@@ -880,11 +890,12 @@ namespace gif_read
         GifFileData& gif = _impl->file;
         
         iter.currentFrame = (uint8*)GT_MALLOC(gif.header.width * gif.header.height * 4 * sizeof(uint8));
+        memcpy(iter.currentFrame, _impl->firstFrame, gif.header.width * gif.header.height * 4 * sizeof(uint8));
+
         _impl->numIterators++;
         return _impl->numIterators-1;
     }
     
-    //todo - actually have this do this properly, maybe some sort of id system to support destroying handles
     void StreamingGIF::destroyIterator(uint32 iterator)
     {
         if (_impl->iterators[iterator].currentFrame)
