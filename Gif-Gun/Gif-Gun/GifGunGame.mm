@@ -222,7 +222,8 @@
 
 -(void)spray
 {
-    Ray *r = [[Ray alloc] initWithOrigin:_playerTransform->position andDirection:_playerTransform->forward];
+    Ray *ray = [[Ray alloc] initWithOrigin:_playerTransform->position andDirection:_playerTransform->forward];
+    Ray& r = *ray;
     
     const int NO_HIT = 9999;
     float shortestDist = NO_HIT;
@@ -233,14 +234,13 @@
         BoxCollider* b = _boxes[i];
 
         //ray/box collision test https://tavianator.com/fast-branchless-raybounding-box-intersections/
-        
         float t[10];
-        t[1] = (b->min.x - r->origin.x)/r->direction.x;
-        t[2] = (b->max.x - r->origin.x)/r->direction.x;
-        t[3] = (b->min.y - r->origin.y)/r->direction.y;
-        t[4] = (b->max.y - r->origin.y)/r->direction.y;
-        t[5] = (b->min.z - r->origin.z)/r->direction.z;
-        t[6] = (b->max.z - r->origin.z)/r->direction.z;
+        t[1] = (b->min.x - r.origin.x)/r.direction.x;
+        t[2] = (b->max.x - r.origin.x)/r.direction.x;
+        t[3] = (b->min.y - r.origin.y)/r.direction.y;
+        t[4] = (b->max.y - r.origin.y)/r.direction.y;
+        t[5] = (b->min.z - r.origin.z)/r.direction.z;
+        t[6] = (b->max.z - r.origin.z)/r.direction.z;
         t[7] = fmax(fmax(fmin(t[1], t[2]), fmin(t[3], t[4])), fmin(t[5], t[6]));
         t[8] = fmin(fmin(fmax(t[1], t[2]), fmax(t[3], t[4])), fmax(t[5], t[6]));
         t[9] = (t[8] < 0 || t[7] > t[8]) ? NO_HIT : t[7];
@@ -254,32 +254,33 @@
     
     if (closestBox == nil) return;
     
-    r->len = shortestDist;
-    [[DebugDrawManager sharedInstance] registerRay:r];
-    simd_float3 hitPoint = r->origin + r->direction*shortestDist;
+    r.len = shortestDist;
+    [[DebugDrawManager sharedInstance] registerRay:ray];
+    
+    simd_float3 hitPoint = r.origin + r.direction*shortestDist;
     simd_float3 normalAtPoint = [closestBox normalAtSurfacePoint:hitPoint];
-    NSLog(@"Normal at point: %f %f %f",normalAtPoint.x, normalAtPoint.y, normalAtPoint.z);
     
-    DecalInstance* d = [DecalInstance new];
-    d->decalIndex = (int)[_scn->decals count] % gifCount;
-    gif_read::StreamingGIF& gif = *_gifs[d->decalIndex];
-    d->gifIter = gif.createIterator();
-
-    d->textureHandle = [_renderer createDecalTextureWithSize:CGSizeMake(gif.getWidth(), gif.getHeight()) data:gif.getCurrentFrame(d->gifIter)];
+    DecalInstance* decalInstance = [DecalInstance new];
+    DecalInstance& d = *decalInstance;
+    d.decalIndex = (int)[_scn->decals count] % gifCount;
     
-    d->transform = [[Transform alloc] init];
+    gif_read::StreamingGIF& gif = *_gifs[d.decalIndex];
+    d.gifIter = gif.createIterator();
+    d.textureHandle = [_renderer createDecalTextureWithSize:CGSizeMake(gif.getWidth(), gif.getHeight()) data:gif.getCurrentFrame(d.gifIter)];
+    d.transform = [[Transform alloc] init];
+    
     float randScale = rand() % 4 + 3;
-    [d->transform setScale:simd_make_float3(randScale,randScale,randScale)];
-    [d->transform setPosition:hitPoint + r->direction * (randScale/2.0)];
-    [d->transform lookAt:d->transform->position - normalAtPoint*5];
+    [d.transform setScale:simd_make_float3(randScale,randScale,randScale)];
+    [d.transform setPosition:hitPoint + r.direction * (randScale/2.0)];
+    [d.transform lookAt:d.transform->position - normalAtPoint*5];
     
     float dot = simd_dot(normalAtPoint, simd_make_float3(0, 1, 0));
     if (dot > 0.999 || dot < -0.999)
     {
-        [d->transform lookAt:d->transform->position - normalAtPoint*5 withUpVector:_playerTransform->up];
+        [d.transform lookAt:d.transform->position - normalAtPoint*5 withUpVector:_playerTransform->up];
     }
     
-    [_scn->decals addObject:d];
+    [_scn->decals addObject:decalInstance];
 
 }
 
